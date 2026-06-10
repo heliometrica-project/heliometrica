@@ -1,0 +1,79 @@
+@startuml
+title Sequencia - Cadastro/Login e Cadastro de Modulo Solar
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor "Usuario" as Usuario
+boundary "Frontend" as Frontend
+control "AuthController/API" as API
+control "UserService" as UserService
+database "Banco de Dados" as Banco
+
+== Cadastro de usuario ==
+
+Usuario -> Frontend: Informa nome, e-mail e senha
+Frontend -> API: POST /usuarios\n(dados de cadastro)
+activate API
+API -> UserService: cadastrarUsuario(dados)
+activate UserService
+UserService -> Banco: consultarUsuarioPorEmail(email)
+activate Banco
+Banco --> UserService: usuario nao encontrado
+deactivate Banco
+UserService -> Banco: inserirUsuario(usuario)
+activate Banco
+Banco --> UserService: usuario criado
+deactivate Banco
+UserService --> API: usuario cadastrado
+deactivate UserService
+API --> Frontend: 201 Created\n(usuario)
+deactivate API
+Frontend --> Usuario: Exibe confirmacao de cadastro
+
+== Login ==
+
+Usuario -> Frontend: Informa e-mail e senha
+Frontend -> API: POST /auth/login\n(credenciais)
+activate API
+API -> UserService: autenticar(email, senha)
+activate UserService
+UserService -> Banco: consultarUsuarioPorEmail(email)
+activate Banco
+Banco --> UserService: usuario encontrado
+deactivate Banco
+UserService -> UserService: validarSenha(senha)
+UserService --> API: token de acesso
+deactivate UserService
+API --> Frontend: 200 OK\n(token)
+deactivate API
+Frontend --> Usuario: Login realizado
+
+== Cadastro autenticado de modulo solar ==
+
+Usuario -> Frontend: Informa especificacoes do modulo solar
+Frontend -> API: POST /modulos-solares\nAuthorization: Bearer token\n(especificacoes)
+activate API
+API -> UserService: validarToken(token)
+activate UserService
+UserService --> API: usuario autenticado
+deactivate UserService
+API -> UserService: cadastrarModuloSolar(usuarioId, especificacoes)
+activate UserService
+UserService -> Banco: inserirModuloSolar(usuarioId, especificacoes)
+activate Banco
+Banco --> UserService: modulo solar criado
+deactivate Banco
+UserService --> API: modulo solar cadastrado
+deactivate UserService
+API --> Frontend: 201 Created\n(modulo solar)
+deactivate API
+Frontend --> Usuario: Exibe modulo solar cadastrado
+
+alt Credenciais invalidas ou token ausente/invalido
+    API --> Frontend: 401 Unauthorized\n(erro de autenticacao)
+    Frontend --> Usuario: Solicita novo login
+end
+
+@enduml
