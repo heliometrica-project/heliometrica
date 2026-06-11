@@ -1,0 +1,62 @@
+@startuml
+autonumber
+skinparam ParticipantPadding 10
+skinparam BoxPadding 10
+skinparam linetype ortho
+
+title Diagrama de Sequência: Estimativa Energética e Histórico
+
+actor "Usuário" as user
+participant "Frontend" as fe
+participant "Regiao" as regiao
+participant "APIClima" as apiclima
+participant "ModuloSolar" as modulo
+participant "EstimativaEnergetica" as estimativa
+participant "HistoricoGeracao" as historico
+
+== Consulta de Clima e Região ==
+user -> fe: Seleciona região
+activate fe
+
+fe -> regiao: buscar_dados()
+activate regiao
+
+regiao -> apiclima: buscar_dados_meteorologicos()
+activate apiclima
+
+apiclima --> regiao: retornar_indices()
+deactivate apiclima
+
+regiao --> fe: Dados climáticos e coordenadas
+deactivate regiao
+
+== Definição do Equipamento ==
+user -> fe: Informa dados do painel solar
+fe -> modulo: cadastrar_especificacoes()
+activate modulo
+modulo --> fe: Especificações validadas (potencia, eficiencia, area)
+deactivate modulo
+
+== Cálculo da Estimativa ==
+user -> fe: Solicita estimativa de produção
+fe -> estimativa: calcular_estimativa()
+activate estimativa
+
+estimativa -> estimativa: gerar_grafico()
+estimativa --> fe: valor_estimado, grafico_resultado
+deactivate estimativa
+
+fe --> user: Exibe dashboard com a estimativa e o gráfico
+
+== Salvamento no Histórico ==
+user -> fe: Clica em "Salvar no Histórico"
+fe -> historico: salvar()
+activate historico
+
+historico --> fe: Confirmação
+deactivate historico
+
+fe --> user: Feedback de sucesso
+
+deactivate fe
+@enduml
