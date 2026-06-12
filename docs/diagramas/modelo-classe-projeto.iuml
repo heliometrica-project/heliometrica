@@ -1,74 +1,74 @@
-@startuml "heliometrica"
-skinparam classAttributeIconSize 0
-left to right direction
+    @startuml "heliometrica"
+    skinparam classAttributeIconSize 0
+    left to right direction
 
-class Usuario{
-    - nome: String
-    - email: String
-    - senha: String
-    + autenticar(): boolean
-    + atualizar_cadastro(): void
-    + gerenciar_historico(): void
-}
+    class Usuario{
+        - nome: String
+        - email: String
+        - senha: String
+        + autenticar(): boolean
+        + atualizar_cadastro(): void
+        + gerenciar_historico(): void
+    }
 
-class ModuloSolar{
-    - modelo: String
-    - potencia: Double
-    - eficiencia: Double
-    - area: Double
-    - fabricante: String
-    + cadastrar_especificacoes(): void
-    + editar_especificacoes(): void
-}
+    class ModuloSolar{
+        - modelo: String
+        - potencia: Double
+        - eficiencia: Double
+        - area: Double
+        - fabricante: String
+        + cadastrar_especificacoes(): void
+        + editar_especificacoes(): void
+    }
 
-class HistoricoGeracao{
-    - lista_estimativas: List<EstimativaEnergetica>
-    - data_atualizacao: Date
-    + salvar(): void
-    + editar(): void
-    + excluir(): void
-    + listar(): List<EstimativaEnergetica>
-}
+    class HistoricoGeracao{
+        - lista_estimativas: List<EstimativaEnergetica>
+        - data_atualizacao: Date
+        + salvar(): void
+        + editar(): void
+        + excluir(): void
+        + listar(): List<EstimativaEnergetica>
+    }
 
-class EstimativaEnergetica{
-    - valor_estimado: Double
-    - data_calculo: Date
-    - eficiencia_calculada: Double
-    - grafico_resultado: String
-    + calcular_estimativa(): Double
-    + gerar_grafico(): void
-}
+    class EstimativaEnergetica{
+        - valor_estimado: Double
+        - data_calculo: Date
+        - eficiencia_calculada: Double
+        - grafico_resultado: String
+        + calcular_estimativa(): Double
+        + gerar_grafico(): void
+    }
 
-class Relatorio{
-    - tipo_formato: String
-    - data_exportacao: Date
-    - conteudo: String
-    + exportar(): void
-}
+    class Relatorio{
+        - tipo_formato: String
+        - data_exportacao: Date
+        - conteudo: String
+        + exportar(): void
+    }
 
-class Regiao{
-    - nome: String
-    - coordenadas: String
-    - eficiencia_energetica: Double
-    - historico_meteorologico: String
-    + buscar_dados(): String
-    + visualizar_eficiencia(): void
-}
+    class Regiao{
+        - nome: String
+        - coordenadas: String
+        - eficiencia_energetica: Double
+        - historico_meteorologico: String
+        + buscar_dados(): String
+        + visualizar_eficiencia(): void
+    }
 
-class APIClima{
-    + buscar_dados_meteorologicos(): String
-    + retornar_indices(): String
-}
+    class APIClima{
+        + buscar_dados_meteorologicos(): String
+        + retornar_indices(): String
+    }
 
-Usuario "1" -down- "1" HistoricoGeracao: possui >
-Usuario "1" -right- "0..*" ModuloSolar: cadastra >
+    Usuario "1" *-down- "0..*" HistoricoGeracao: possui >
+    Usuario "1" -right- "0..*" ModuloSolar: cadastra >
 
-HistoricoGeracao "1" -down- "0..*" EstimativaEnergetica: armazena >
-ModuloSolar "1" -down- "0..*" EstimativaEnergetica: usado >
+    HistoricoGeracao "1" o-down- "0..*" EstimativaEnergetica: armazena >
+    ModuloSolar "1" -down- "0..*" EstimativaEnergetica: usado >
 
-EstimativaEnergetica "1" -down- "1" Regiao: utiliza >
-Relatorio "0..*" -left- "1..*" EstimativaEnergetica: exporta >
+    EstimativaEnergetica "1" -down- "1" Regiao: utiliza >
+    Relatorio "0..*" o-left- "1..*" EstimativaEnergetica: exporta >
 
-Regiao -right-> APIClima: consulta >
+    Regiao -right-> APIClima: consulta >
 
-@enduml
+    @enduml
