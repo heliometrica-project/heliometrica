@@ -1,0 +1,69 @@
+@startuml estimativa
+title Heliométrica - Fluxo Principal de Estimativa Solar
+
+start
+
+:Selecionar região no mapa;
+
+if (Usuário autenticado?) then (Sim)
+
+    :Escolher módulo solar;
+
+    if (Usar módulo já cadastrado?) then (Sim)
+        :Selecionar módulo salvo e carregar especificações;
+    else (Não)
+        :Informar especificações do módulo;
+    endif
+
+    :Validar dados do módulo;
+
+    while (Dados válidos?) is (Não)
+        :Exibir mensagens de validação;
+        :Escolher módulo solar;
+        :Validar dados do módulo;
+    endwhile (Sim)
+
+    :Solicitar dados meteorológicos;
+
+    if (API climática respondeu?) then (Sim)
+
+        :Receber dados;
+
+        :Calcular estimativa energética;
+        :Gerar indicadores\n(kWh/dia, mês e ano);
+        :Gerar gráfico da estimativa;
+        :Exibir resultado ao usuário;
+
+        fork
+
+            if (Salvar histórico?) then (Sim)
+                :Salvar estimativa no histórico;
+            endif
+
+        fork again
+
+            if (Exportar relatório?) then (Sim)
+                :Gerar arquivo CSV;
+                :Registrar exportação;
+            endif
+
+        end fork
+
+        :Finalizar processo;
+        stop
+
+    else (Não)
+
+        :Exibir erro de indisponibilidade\n da API climática;
+        stop
+
+    endif
+
+else (Não)
+
+    :Solicitar login/cadastro;
+    stop
+
+endif
+
+@enduml
