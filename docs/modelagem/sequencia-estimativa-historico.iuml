@@ -1,0 +1,72 @@
+@startuml
+skinparam ParticipantPadding 10
+skinparam BoxPadding 10
+skinparam linetype ortho
+
+title Diagrama de Sequência: Estimativa Energética e Histórico
+
+actor "Usuário" as user
+participant "Frontend" as fe
+participant "grafico:ComponenteGrafico" as grafico
+participant ":Regiao" as regiao
+participant ":APIClima" as apiclima
+participant "modulo:ModuloSolar" as modulo
+participant "estimativa:EstimativaEnergetica" as estimativa
+participant "historico:HistoricoGeracao" as historico
+
+== 1. Consulta de Clima e Região ==
+autonumber 1.1
+user -> fe: Seleciona região
+activate fe
+
+fe -> regiao: buscar_dados(regiao.id)
+activate regiao
+
+regiao -> apiclima: buscar_dados_meteorologicos(regiao.coordenadas)
+activate apiclima
+
+apiclima --> regiao: dados_climaticos
+deactivate apiclima
+
+regiao --> fe: Regiao atualizada com historico_meteorologico
+deactivate regiao
+
+== 2. Definição do Equipamento ==
+autonumber 2.1
+user -> fe: Informa dados do painel solar
+fe -> modulo ** : <<create>>
+activate modulo
+fe -> modulo: cadastrar_especificacoes(potencia, eficiencia, area, fabricante)
+modulo --> fe: modulo_cadastrado
+deactivate modulo
+
+== 3. Cálculo da Estimativa e Renderização ==
+autonumber 3.1
+user -> fe: Solicita estimativa de produção
+fe -> estimativa ** : <<create>>
+activate estimativa
+fe -> estimativa: calcular_estimativa(regiao, modulo)
+estimativa --> fe: dados_estimativa
+deactivate estimativa
+
+fe -> grafico ** : <<create>>
+activate grafico
+fe -> grafico: renderizar(dados_estimativa)
+grafico --> fe: componente_visual
+deactivate grafico
+
+fe --> user: Exibe dashboard com a estimativa e o gráfico
+
+== 4. Salvamento no Histórico ==
+autonumber 4.1
+user -> fe: Seleciona "Salvar no Histórico"
+fe -> historico: salvar(estimativa)
+activate historico
+
+historico --> fe: status_salvamento
+deactivate historico
+
+fe --> user: Feedback de sucesso
+
+deactivate fe
+@enduml
