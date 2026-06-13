@@ -18,7 +18,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
-    'apps.health',
+    # apps do projeto
+    'apps.health',       # endpoint de saúde / utilitários
+    'apps.core',         # entidades de referência: Region, SolarModule
+    'apps.estimates',    # domínio principal: WeatherSnapshot, EnergyEstimate
+    'apps.reporting',    # saída: GenerationHistory, ReportExport
 ]
 
 MIDDLEWARE = [
