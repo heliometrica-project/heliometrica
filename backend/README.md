@@ -10,6 +10,7 @@ API REST do sistema de estimativa de eficiência de energia solar, construída c
 |---|---|
 | Framework | Django 5.1 |
 | API | Django REST Framework 3.15 |
+| Autenticação | SimpleJWT |
 | Banco de dados | SQLite (desenvolvimento) |
 | CORS | django-cors-headers |
 | Configuração | python-decouple |
@@ -135,6 +136,10 @@ A API estará disponível em `http://localhost:8000`.
 
 | Método | URL | Descrição |
 |---|---|---|
+| `POST` | `/api/auth/register/` | Cadastro de usuario |
+| `POST` | `/api/auth/login/` | Login com retorno de tokens `access` e `refresh` |
+| `POST` | `/api/auth/refresh/` | Renovacao do token de acesso |
+| `GET` | `/api/auth/me/` | Dados do usuario autenticado (exige Bearer token) |
 | `GET` | `/api/health/` | Health check da API |
 | — | `/admin/` | Django Admin |
 
