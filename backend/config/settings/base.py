@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'apps.core',         # entidades de referência: Region, SolarModule
     'apps.estimates',    # domínio principal: WeatherSnapshot, EnergyEstimate
     'apps.reporting',    # saída: GenerationHistory, ReportExport
+    'apps.regions',      # API de regiões georreferenciadas
 ]
 
 MIDDLEWARE = [
