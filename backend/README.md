@@ -45,6 +45,12 @@ backend/
 │   │   ├── admin.py
 │   │   └── tests.py
 │   │
+│   ├── regions/              # API pública de regiões (read-only)
+│   │   ├── serializers.py   # RegionSerializer
+│   │   ├── views.py         # RegionViewSet
+│   │   ├── urls.py          # /api/regions/
+│   │   └── tests.py         # 12 testes
+│   │
 │   └── reporting/           # Camada de saída e histórico
 │       ├── models.py        # GenerationHistory, ReportExport
 │       ├── admin.py
@@ -141,9 +147,10 @@ A API estará disponível em `http://localhost:8000`.
 | `POST` | `/api/auth/refresh/` | Renovacao do token de acesso |
 | `GET` | `/api/auth/me/` | Dados do usuario autenticado (exige Bearer token) |
 | `GET` | `/api/health/` | Health check da API |
+| `GET` | `/api/regions/` | Listar todas as regiões |
+| `GET` | `/api/regions/{id}/` | Detalhe de uma região |
+| `GET` | `/api/regions/?search=...` | Buscar regiões por nome ou estado |
 | — | `/admin/` | Django Admin |
-
-> As demais rotas (estimativas, regiões, módulos, relatórios) serão adicionadas nas issues subsequentes.
 
 ---
 
@@ -273,16 +280,18 @@ sqlite3 db.sqlite3 ".tables"
 
 ## Testes
 
-A suite de testes cobre os models dos 3 apps de domínio:
+A suite de testes cobre os 4 apps do backend:
 
 | App | Classes de teste | Total de testes |
 |---|---|---|
 | `core` | `RegionModelTest`, `SolarModuleModelTest` | 11 |
 | `estimates` | `WeatherSnapshotModelTest`, `EnergyEstimateModelTest` | 18 |
 | `reporting` | `GenerationHistoryModelTest`, `ReportExportModelTest` | 15 |
-| **Total** | 6 | **44** |
+| `regions` | `RegionAPITest` | 12 |
+| `health` | `HealthCheckTest` | 1 |
+| **Total** | 8 | **57** |
 
-Cenários cobertos: criação de instâncias, valores padrão, `__str__`, constraints (`unique_together`), campos nullable, comportamento de FKs (`CASCADE`, `SET_NULL`) e timestamps automáticos.
+Cenários cobertos: criação de instâncias, valores padrão, `__str__`, constraints (`unique_together`), campos nullable, comportamento de FKs (`CASCADE`, `SET_NULL`), timestamps automáticos, CRUD via API REST, busca textual, e health check.
 
 ---
 
