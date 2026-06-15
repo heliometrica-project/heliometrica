@@ -17,6 +17,15 @@ from rest_framework.test import APIClient
 
 from apps.core.models import Region, SolarModule
 
+MODULE_PAYLOAD = {
+    "model": "RS-540M10",
+    "manufacturer": "Canadian Solar",
+    "power_wp": "540.00",
+    "efficiency": "20.90",
+    "area_m2": "2.583",
+    "quantity": 4,
+}
+
 User = get_user_model()
 
 
@@ -248,3 +257,161 @@ class RegionAPITest(TestCase):
         data = response.json()
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]['name'], 'Pau dos Ferros')
+
+
+# ---------------------------------------------------------------------------
+# SolarModule API
+# ---------------------------------------------------------------------------
+
+class SolarModuleAPITest(TestCase):
+    """Testes da API de SolarModule (CRUD completo, autenticado)."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = make_user(username="owner", password="secret123")
+        self.other_user = make_user(username="other", password="secret123")
+
+    def _auth(self, user=None):
+        user = user or self.user
+        response = self.client.post(
+            '/api/auth/login/',
+            {'username': user.username, 'password': 'secret123'},
+            format='json',
+        )
+        token = response.json()['access']
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
+
+    # --- Create ---
+
+    def test_criar_modulo_autenticado(self):
+        self._auth()
+        response = self.client.post('/api/modules/', MODULE_PAYLOAD, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        data = response.json()
+        self.assertEqual(data['model'], 'RS-540M10')
+        self.assertEqual(data['quantity'], 4)
+
+    def test_criar_modulo_sem_autenticacao_retorna_401(self):
+        response = self.client.post('/api/modules/', MODULE_PAYLOAD, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_criar_modulo_associa_usuario_logado(self):
+        self._auth()
+        response = self.client.post('/api/modules/', MODULE_PAYLOAD, format='json')
+        module = SolarModule.objects.get(pk=response.json()['id'])
+        self.assertEqual(module.user, self.user)
+
+    # --- List ---
+
+    def test_listar_modulos_retorna_apenas_do_usuario(self):
+        self._auth()
+        make_solar_module(self.user, model="Painel A")
+        make_solar_module(self.user, model="Painel B")
+        make_solar_module(self.other_user, model="Painel C")
+
+        response = self.client.get('/api/modules/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        modelos = [m['model'] for m in data]
+        self.assertIn('Painel A', modelos)
+        self.assertIn('Painel B', modelos)
+        self.assertNotIn('Painel C', modelos)
+
+    def test_listar_modulos_sem_autenticacao_retorna_401(self):
+        response = self.client.get('/api/modules/')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_listar_modulos_vazio(self):
+        self._auth()
+        response = self.client.get('/api/modules/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json(), [])
+
+    # --- Detail ---
+
+    def test_detalhe_modulo_do_proprio_usuario(self):
+        self._auth()
+        module = make_solar_module(self.user)
+        response = self.client.get(f'/api/modules/{module.pk}/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()['model'], module.model)
+
+    def test_detalhe_modulo_de_outro_usuario_retorna_404(self):
+        self._auth()
+        module = make_solar_module(self.other_user)
+        response = self.client.get(f'/api/modules/{module.pk}/')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_detalhe_modulo_inexistente_retorna_404(self):
+        self._auth()
+        response = self.client.get('/api/modules/999/')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    # --- Update ---
+
+    def test_atualizar_modulo_proprio(self):
+        self._auth()
+        module = make_solar_module(self.user)
+        response = self.client.patch(
+            f'/api/modules/{module.pk}/',
+            {'power_wp': '600.00'},
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        module.refresh_from_db()
+        self.assertEqual(module.power_wp, Decimal('600.00'))
+
+    def test_atualizar_modulo_de_outro_usuario_retorna_404(self):
+        self._auth()
+        module = make_solar_module(self.other_user)
+        response = self.client.patch(
+            f'/api/modules/{module.pk}/',
+            {'power_wp': '600.00'},
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    # --- Delete ---
+
+    def test_deletar_modulo_proprio(self):
+        self._auth()
+        module = make_solar_module(self.user)
+        response = self.client.delete(f'/api/modules/{module.pk}/')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(SolarModule.objects.filter(pk=module.pk).exists())
+
+    def test_deletar_modulo_de_outro_usuario_retorna_404(self):
+        self._auth()
+        module = make_solar_module(self.other_user)
+        response = self.client.delete(f'/api/modules/{module.pk}/')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    # --- Validações ---
+
+    def test_potencia_negativa_retorna_erro(self):
+        self._auth()
+        payload = {**MODULE_PAYLOAD, 'power_wp': '-10.00'}
+        response = self.client.post('/api/modules/', payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('power_wp', response.json())
+
+    def test_eficiencia_acima_de_100_retorna_erro(self):
+        self._auth()
+        payload = {**MODULE_PAYLOAD, 'efficiency': '150.00'}
+        response = self.client.post('/api/modules/', payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('efficiency', response.json())
+
+    def test_area_zero_retorna_erro(self):
+        self._auth()
+        payload = {**MODULE_PAYLOAD, 'area_m2': '0'}
+        response = self.client.post('/api/modules/', payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('area_m2', response.json())
+
+    def test_quantidade_zero_retorna_erro(self):
+        self._auth()
+        payload = {**MODULE_PAYLOAD, 'quantity': 0}
+        response = self.client.post('/api/modules/', payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('quantity', response.json())
