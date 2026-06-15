@@ -1,7 +1,10 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import './RootLayout.css'
 
 export function RootLayout() {
+  const location = useLocation()
+  const isDashboard = location.pathname === '/dashboard'
+
   return (
     <div className="root-layout">
       <header className="root-header">
@@ -9,11 +12,12 @@ export function RootLayout() {
           <h1 className="root-header__title">Heliométrica</h1>
           <nav className="root-header__nav">
             <a href="/" className="root-header__link">Início</a>
+            <a href="/dashboard" className="root-header__link">Dashboard</a>
           </nav>
         </div>
       </header>
 
-      <main className="root-main">
+      <main className={`root-main ${isDashboard ? 'root-main--full' : ''}`}>
         <Outlet />
       </main>
 

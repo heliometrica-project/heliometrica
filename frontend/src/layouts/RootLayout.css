@@ -48,6 +48,11 @@
   padding: 2rem 1rem;
 }
 
+.root-main--full {
+  max-width: none;
+  padding: 0;
+}
+
 .root-footer {
   background-color: #f7fafc;
   border-top: 1px solid #e2e8f0;
