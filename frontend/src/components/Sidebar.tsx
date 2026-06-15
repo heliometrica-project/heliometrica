@@ -87,7 +87,7 @@ export function Sidebar({ onSelect }: SidebarProps) {
                   }}
                 >
                   <span className="sidebar__item-name">{name}</span>
-                  <span className="sidebar__item-state">{state || item.display_name.split(',').slice(-2).join(',').trim()}</span>
+                  <span className="sidebar__item-state">{item.display_name}</span>
                 </li>
               )
             })}

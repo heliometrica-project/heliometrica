@@ -5,6 +5,8 @@ interface NominatimAddress {
   town?: string
   village?: string
   municipality?: string
+  city_district?: string
+  county?: string
   state?: string
   country?: string
 }
@@ -16,8 +18,16 @@ export interface NominatimResult {
   address: NominatimAddress
 }
 
-function extractCity(addr: NominatimAddress): string {
-  return addr.city || addr.town || addr.village || addr.municipality || ''
+function extractLocality(addr: NominatimAddress): string {
+  return (
+    addr.city ||
+    addr.town ||
+    addr.village ||
+    addr.municipality ||
+    addr.city_district ||
+    addr.county ||
+    ''
+  )
 }
 
 function extractState(addr: NominatimAddress): string {
@@ -30,9 +40,9 @@ export function parseResult(item: NominatimResult): {
   name: string
   state: string
 } {
-  const city = extractCity(item.address)
+  const locality = extractLocality(item.address)
   const stateAbbr = extractState(item.address)
-  const name = city || item.display_name.split(',')[0].trim()
+  const name = locality || item.display_name.split(',')[0].trim()
   return { name, state: stateAbbr }
 }
 
