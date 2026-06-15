@@ -36,9 +36,12 @@ interface InteractiveMapProps {
 }
 
 function MapClickHandler({ onClick }: { onClick: (latlng: { lat: number; lng: number }) => void }) {
+  const ref = useRef(onClick)
+  ref.current = onClick
+
   useMapEvents({
     click: (e) => {
-      onClick({ lat: e.latlng.lat, lng: e.latlng.lng })
+      ref.current({ lat: e.latlng.lat, lng: e.latlng.lng })
     },
   })
   return null

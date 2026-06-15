@@ -6,7 +6,7 @@ import { RegionDetailCard } from '../components/RegionDetailCard'
 import { ChartPlaceholder } from '../components/ChartPlaceholder'
 import './Dashboard.css'
 
-const MAX_DISTANCE_DEG = 0.5
+const MAX_DISTANCE_KM = 5
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6371
@@ -48,7 +48,7 @@ export function Dashboard() {
         }
       }
 
-      if (nearest && nearestDist <= MAX_DISTANCE_DEG * 111) {
+      if (nearest && nearestDist <= MAX_DISTANCE_KM) {
         setSelectedRegion(nearest)
       } else {
         setSelectedRegion(null)
