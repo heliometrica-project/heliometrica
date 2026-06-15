@@ -8,40 +8,12 @@ import { RegionDetailCard } from '../components/RegionDetailCard'
 import { ChartPlaceholder } from '../components/ChartPlaceholder'
 import './Dashboard.css'
 
-const MAX_DISTANCE_KM = 5
-
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
-  const R = 6371
-  const dLat = ((lat2 - lat1) * Math.PI) / 180
-  const dLng = ((lng2 - lng1) * Math.PI) / 180
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
-
-function findNearbyRegion(regions: Region[], lat: number, lng: number): Region | null {
-  let nearest: Region | null = null
-  let nearestDist = Infinity
-
-  for (const r of regions) {
-    const dist = haversineKm(lat, lng, Number(r.latitude), Number(r.longitude))
-    if (dist < nearestDist) {
-      nearestDist = dist
-      nearest = r
-    }
-  }
-
-  return nearest && nearestDist <= MAX_DISTANCE_KM ? nearest : null
-}
-
 export function Dashboard() {
   const [regions, setRegions] = useState<Region[]>([])
   const [selectedLocation, setSelectedLocation] = useState<SelectedLocation | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  void regions
 
   useEffect(() => {
     setLoading(true)
@@ -67,18 +39,6 @@ export function Dashboard() {
 
   const handleMapClick = useCallback(
     async ({ lat, lng }: { lat: number; lng: number }) => {
-      const nearby = findNearbyRegion(regions, lat, lng)
-      if (nearby) {
-        setSelectedLocation({
-          name: nearby.name,
-          state: nearby.state,
-          latitude: Number(nearby.latitude),
-          longitude: Number(nearby.longitude),
-          source: 'region',
-        })
-        return
-      }
-
       const result = await reverseGeocode(lat, lng)
       if (result) {
         const { state } = parseResult(result)
@@ -92,7 +52,7 @@ export function Dashboard() {
         })
       }
     },
-    [regions]
+    []
   )
 
   if (loading) {
