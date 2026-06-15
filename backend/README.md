@@ -106,6 +106,8 @@ Edite `backend/.env` conforme necessário:
 | `DEBUG` | `True` | Ativar modo debug |
 | `ALLOWED_HOSTS` | `localhost,127.0.0.1` | Hosts permitidos (separados por vírgula) |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:3000,...` | Origins do frontend (separadas por vírgula) |
+| `WEATHER_API_BASE_URL` | `https://api.open-meteo.com/v1/forecast` | URL base da API meteorologica externa |
+| `WEATHER_API_TIMEOUT_SECONDS` | `5` | Timeout da consulta meteorologica em segundos |
 
 ### 5. Aplicar migrações
 
@@ -150,6 +152,7 @@ A API estará disponível em `http://localhost:8000`.
 | `GET` | `/api/regions/` | Listar todas as regiões |
 | `GET` | `/api/regions/{id}/` | Detalhe de uma região |
 | `GET` | `/api/regions/?search=...` | Buscar regiões por nome ou estado |
+| `GET` | `/api/weather/?region_id={id}` | Consultar clima por coordenada da região e salvar snapshot |
 | — | `/admin/` | Django Admin |
 
 ---

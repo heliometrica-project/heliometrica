@@ -11,14 +11,22 @@ Cobertura:
 """
 
 import datetime
+import json
 from decimal import Decimal
+from unittest.mock import patch
+from urllib.error import URLError
 
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from django.test import TestCase
+from django.urls import reverse
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.test import APITestCase
 
 from apps.core.models import Region, SolarModule
 from apps.estimates.models import EnergyEstimate, WeatherSnapshot
+from apps.estimates.services import WeatherService, WeatherServiceError
 
 User = get_user_model()
 
@@ -201,3 +209,89 @@ class EnergyEstimateModelTest(TestCase):
         """EnergyEstimate pode ser criada sem módulo (module=None)."""
         estimate = make_energy_estimate(self.user, self.region, module=None)
         self.assertIsNone(estimate.module)
+
+
+# ---------------------------------------------------------------------------
+# WeatherService / API
+# ---------------------------------------------------------------------------
+
+class FakeWeatherResponse:
+    def __init__(self, payload):
+        self.payload = payload
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        return False
+
+    def read(self):
+        return json.dumps(self.payload).encode('utf-8')
+
+
+def make_open_meteo_payload(snapshot_date=None):
+    if snapshot_date is None:
+        snapshot_date = timezone.localdate()
+
+    return {
+        'daily': {
+            'time': [snapshot_date.isoformat()],
+            'temperature_2m_mean': [28.5],
+            'cloud_cover_mean': [42],
+            'shortwave_radiation_sum': [20.52],
+        },
+        'daily_units': {
+            'temperature_2m_mean': 'C',
+            'cloud_cover_mean': '%',
+            'shortwave_radiation_sum': 'MJ/m2',
+        },
+    }
+
+
+class WeatherApiTest(APITestCase):
+    def setUp(self):
+        self.region = make_region()
+
+    @patch('apps.estimates.services.request.urlopen')
+    def test_weather_endpoint_returns_normalized_data_and_saves_snapshot(self, urlopen_mock):
+        urlopen_mock.return_value = FakeWeatherResponse(make_open_meteo_payload())
+
+        response = self.client.get(reverse('weather'), {'region_id': self.region.id})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['region'], self.region.id)
+        self.assertEqual(response.data['irradiation'], '5.700')
+        self.assertEqual(response.data['temperature'], '28.50')
+        self.assertEqual(response.data['cloud_cover'], '42.00')
+        self.assertEqual(response.data['status'], WeatherSnapshot.STATUS_OK)
+
+        snapshot = WeatherSnapshot.objects.get(region=self.region)
+        self.assertEqual(snapshot.irradiation, Decimal('5.700'))
+        self.assertEqual(snapshot.temperature, Decimal('28.50'))
+        self.assertEqual(snapshot.cloud_cover, Decimal('42.00'))
+        self.assertEqual(snapshot.raw_json['daily']['cloud_cover_mean'], [42])
+
+    @patch('apps.estimates.services.request.urlopen')
+    def test_weather_endpoint_returns_cached_snapshot_without_external_call(self, urlopen_mock):
+        snapshot = make_weather_snapshot(self.region, date=timezone.localdate())
+
+        response = self.client.get(reverse('weather'), {'region_id': self.region.id})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['id'], snapshot.id)
+        self.assertEqual(response.data['status'], WeatherSnapshot.STATUS_CACHED)
+        urlopen_mock.assert_not_called()
+
+    @patch('apps.estimates.services.request.urlopen')
+    def test_weather_service_logs_technical_error(self, urlopen_mock):
+        urlopen_mock.side_effect = URLError('timeout')
+
+        with self.assertLogs('apps.estimates.services', level='ERROR') as logs:
+            with self.assertRaises(WeatherServiceError):
+                WeatherService().get_snapshot(self.region)
+
+        self.assertTrue(
+            any('Erro tecnico ao consultar API meteorologica externa.' in message for message in logs.output)
+        )
+        snapshot = WeatherSnapshot.objects.get(region=self.region, date=timezone.localdate())
+        self.assertEqual(snapshot.status, WeatherSnapshot.STATUS_ERROR)
