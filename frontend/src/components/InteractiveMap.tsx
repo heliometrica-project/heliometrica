@@ -6,8 +6,7 @@ import 'leaflet/dist/leaflet.css'
 import './InteractiveMap.css'
 
 const BRAZIL_CENTER: [number, number] = [-14.2350, -51.9253]
-const BRAZIL_ZOOM = 4
-const LOCATION_ZOOM = 9
+const INITIAL_ZOOM = 5
 
 function fixLeafletIcons() {
   delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl
@@ -57,11 +56,7 @@ function MapFlyTo({ location }: { location: SelectedLocation | null }) {
       return
     }
     if (location) {
-      map.flyTo(
-        [location.latitude, location.longitude],
-        LOCATION_ZOOM,
-        { duration: 0.8 }
-      )
+      map.panTo([location.latitude, location.longitude], { duration: 0.6 })
     }
   }, [map, location])
 
@@ -72,7 +67,7 @@ export function InteractiveMap({ selectedLocation, onMapClick }: InteractiveMapP
   const center = selectedLocation
     ? [selectedLocation.latitude, selectedLocation.longitude] as [number, number]
     : BRAZIL_CENTER
-  const zoom = selectedLocation ? LOCATION_ZOOM : BRAZIL_ZOOM
+  const zoom = INITIAL_ZOOM
 
   return (
     <div className="interactive-map">

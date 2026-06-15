@@ -54,19 +54,3 @@
   margin: 0;
 }
 
-.region-detail__source {
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.125rem 0.5rem;
-  border-radius: 4px;
-}
-
-.region-detail__source--region {
-  background-color: #c6f6d5;
-  color: #276749;
-}
-
-.region-detail__source--osm {
-  background-color: #bee3f8;
-  color: #2b6cb0;
-}

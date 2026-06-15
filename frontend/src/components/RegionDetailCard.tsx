@@ -36,14 +36,6 @@ export function RegionDetailCard({ location }: RegionDetailCardProps) {
           <dt>Longitude</dt>
           <dd>{location.longitude}</dd>
         </div>
-        <div className="region-detail__row">
-          <dt>Origem</dt>
-          <dd>
-            <span className={`region-detail__source region-detail__source--${location.source}`}>
-              {location.source === 'region' ? 'Região cadastrada' : 'OpenStreetMap'}
-            </span>
-          </dd>
-        </div>
       </dl>
     </div>
   )
