@@ -1,13 +1,13 @@
 import { useEffect, useRef } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
-import type { Region } from '../types'
+import type { SelectedLocation } from '../types'
 import 'leaflet/dist/leaflet.css'
 import './InteractiveMap.css'
 
 const BRAZIL_CENTER: [number, number] = [-14.2350, -51.9253]
 const BRAZIL_ZOOM = 4
-const REGION_ZOOM = 9
+const LOCATION_ZOOM = 9
 
 function fixLeafletIcons() {
   delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl
@@ -31,7 +31,7 @@ const markerIcon = new L.Icon({
 })
 
 interface InteractiveMapProps {
-  selectedRegion: Region | null
+  selectedLocation: SelectedLocation | null
   onMapClick: (latlng: { lat: number; lng: number }) => void
 }
 
@@ -47,7 +47,7 @@ function MapClickHandler({ onClick }: { onClick: (latlng: { lat: number; lng: nu
   return null
 }
 
-function MapFlyTo({ region }: { region: Region | null }) {
+function MapFlyTo({ location }: { location: SelectedLocation | null }) {
   const map = useMap()
   const initial = useRef(true)
 
@@ -56,23 +56,23 @@ function MapFlyTo({ region }: { region: Region | null }) {
       initial.current = false
       return
     }
-    if (region) {
+    if (location) {
       map.flyTo(
-        [Number(region.latitude), Number(region.longitude)],
-        REGION_ZOOM,
+        [location.latitude, location.longitude],
+        LOCATION_ZOOM,
         { duration: 0.8 }
       )
     }
-  }, [map, region])
+  }, [map, location])
 
   return null
 }
 
-export function InteractiveMap({ selectedRegion, onMapClick }: InteractiveMapProps) {
-  const center = selectedRegion
-    ? [Number(selectedRegion.latitude), Number(selectedRegion.longitude)] as [number, number]
+export function InteractiveMap({ selectedLocation, onMapClick }: InteractiveMapProps) {
+  const center = selectedLocation
+    ? [selectedLocation.latitude, selectedLocation.longitude] as [number, number]
     : BRAZIL_CENTER
-  const zoom = selectedRegion ? REGION_ZOOM : BRAZIL_ZOOM
+  const zoom = selectedLocation ? LOCATION_ZOOM : BRAZIL_ZOOM
 
   return (
     <div className="interactive-map">
@@ -89,21 +89,20 @@ export function InteractiveMap({ selectedRegion, onMapClick }: InteractiveMapPro
 
         <MapClickHandler onClick={onMapClick} />
 
-        {selectedRegion && (
+        {selectedLocation && (
           <Marker
-            key={selectedRegion.id}
-            position={[Number(selectedRegion.latitude), Number(selectedRegion.longitude)]}
+            position={[selectedLocation.latitude, selectedLocation.longitude]}
             icon={markerIcon}
           >
             <Popup>
-              <strong>{selectedRegion.name}</strong>
+              <strong>{selectedLocation.name}</strong>
               <br />
-              {selectedRegion.state} &mdash; {selectedRegion.latitude}, {selectedRegion.longitude}
+              {selectedLocation.state} &mdash; {selectedLocation.latitude}, {selectedLocation.longitude}
             </Popup>
           </Marker>
         )}
 
-        <MapFlyTo region={selectedRegion} />
+        <MapFlyTo location={selectedLocation} />
       </MapContainer>
     </div>
   )

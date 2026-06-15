@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { apiClient } from '../api'
-import type { Region } from '../types'
+import { reverseGeocode, parseResult } from '../api/nominatim'
+import type { Region, SelectedLocation } from '../types'
+import { Sidebar } from '../components/Sidebar'
 import { InteractiveMap } from '../components/InteractiveMap'
 import { RegionDetailCard } from '../components/RegionDetailCard'
 import { ChartPlaceholder } from '../components/ChartPlaceholder'
@@ -20,9 +22,24 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
+function findNearbyRegion(regions: Region[], lat: number, lng: number): Region | null {
+  let nearest: Region | null = null
+  let nearestDist = Infinity
+
+  for (const r of regions) {
+    const dist = haversineKm(lat, lng, Number(r.latitude), Number(r.longitude))
+    if (dist < nearestDist) {
+      nearestDist = dist
+      nearest = r
+    }
+  }
+
+  return nearest && nearestDist <= MAX_DISTANCE_KM ? nearest : null
+}
+
 export function Dashboard() {
   const [regions, setRegions] = useState<Region[]>([])
-  const [selectedRegion, setSelectedRegion] = useState<Region | null>(null)
+  const [selectedLocation, setSelectedLocation] = useState<SelectedLocation | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -35,23 +52,43 @@ export function Dashboard() {
       .finally(() => setLoading(false))
   }, [])
 
-  const handleMapClick = useCallback(
-    ({ lat, lng }: { lat: number; lng: number }) => {
-      let nearest: Region | null = null
-      let nearestDist = Infinity
+  const selectLocation = useCallback(
+    (loc: { name: string; state: string; lat: number; lng: number }) => {
+      setSelectedLocation({
+        name: loc.name,
+        state: loc.state,
+        latitude: loc.lat,
+        longitude: loc.lng,
+        source: 'osm',
+      })
+    },
+    []
+  )
 
-      for (const r of regions) {
-        const dist = haversineKm(lat, lng, Number(r.latitude), Number(r.longitude))
-        if (dist < nearestDist) {
-          nearestDist = dist
-          nearest = r
-        }
+  const handleMapClick = useCallback(
+    async ({ lat, lng }: { lat: number; lng: number }) => {
+      const nearby = findNearbyRegion(regions, lat, lng)
+      if (nearby) {
+        setSelectedLocation({
+          name: nearby.name,
+          state: nearby.state,
+          latitude: Number(nearby.latitude),
+          longitude: Number(nearby.longitude),
+          source: 'region',
+        })
+        return
       }
 
-      if (nearest && nearestDist <= MAX_DISTANCE_KM) {
-        setSelectedRegion(nearest)
-      } else {
-        setSelectedRegion(null)
+      const result = await reverseGeocode(lat, lng)
+      if (result) {
+        const { name, state } = parseResult(result)
+        setSelectedLocation({
+          name,
+          state,
+          latitude: Number(result.lat),
+          longitude: Number(result.lon),
+          source: 'osm',
+        })
       }
     },
     [regions]
@@ -80,16 +117,20 @@ export function Dashboard() {
 
   return (
     <div className="dashboard">
-      <div className="dashboard__map">
-        <InteractiveMap
-          selectedRegion={selectedRegion}
-          onMapClick={handleMapClick}
-        />
-      </div>
+      <Sidebar onSelect={selectLocation} />
 
-      <div className="dashboard__bottom">
-        <RegionDetailCard region={selectedRegion} />
-        <ChartPlaceholder />
+      <div className="dashboard__content">
+        <div className="dashboard__map">
+          <InteractiveMap
+            selectedLocation={selectedLocation}
+            onMapClick={handleMapClick}
+          />
+        </div>
+
+        <div className="dashboard__bottom">
+          <RegionDetailCard location={selectedLocation} />
+          <ChartPlaceholder />
+        </div>
       </div>
     </div>
   )

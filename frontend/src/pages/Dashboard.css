@@ -1,5 +1,7 @@
 .dashboard {
-  padding-bottom: 1.5rem;
+  display: flex;
+  min-height: calc(100vh - 64px - 53px);
+  margin: -2rem -1rem;
 }
 
 .dashboard__loading,
@@ -8,7 +10,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem 0;
+  width: 100%;
   color: #718096;
   font-size: 0.9375rem;
 }
@@ -33,15 +35,22 @@
   color: #c53030;
 }
 
+.dashboard__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
 .dashboard__map {
-  width: 100%;
-  min-height: 450px;
-  margin-bottom: 1.5rem;
+  flex: 1;
+  min-height: 400px;
 }
 
 .dashboard__bottom {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
-  padding: 0 1.5rem;
 }

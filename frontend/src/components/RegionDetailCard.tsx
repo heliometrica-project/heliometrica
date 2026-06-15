@@ -1,16 +1,16 @@
-import type { Region } from '../types'
+import type { SelectedLocation } from '../types'
 import './RegionDetailCard.css'
 
 interface RegionDetailCardProps {
-  region: Region | null
+  location: SelectedLocation | null
 }
 
-export function RegionDetailCard({ region }: RegionDetailCardProps) {
-  if (!region) {
+export function RegionDetailCard({ location }: RegionDetailCardProps) {
+  if (!location) {
     return (
       <div className="region-detail region-detail--empty">
         <p className="region-detail__empty-text">
-          Selecione uma região para ver os detalhes.
+          Clique no mapa ou pesquise por uma localidade.
         </p>
       </div>
     )
@@ -18,23 +18,31 @@ export function RegionDetailCard({ region }: RegionDetailCardProps) {
 
   return (
     <div className="region-detail">
-      <h3 className="region-detail__title">Detalhes da Região</h3>
+      <h3 className="region-detail__title">Detalhes da Localidade</h3>
       <dl className="region-detail__list">
         <div className="region-detail__row">
           <dt>Nome</dt>
-          <dd>{region.name}</dd>
+          <dd>{location.name}</dd>
         </div>
         <div className="region-detail__row">
           <dt>Estado</dt>
-          <dd>{region.state}</dd>
+          <dd>{location.state}</dd>
         </div>
         <div className="region-detail__row">
           <dt>Latitude</dt>
-          <dd>{region.latitude}</dd>
+          <dd>{location.latitude}</dd>
         </div>
         <div className="region-detail__row">
           <dt>Longitude</dt>
-          <dd>{region.longitude}</dd>
+          <dd>{location.longitude}</dd>
+        </div>
+        <div className="region-detail__row">
+          <dt>Origem</dt>
+          <dd>
+            <span className={`region-detail__source region-detail__source--${location.source}`}>
+              {location.source === 'region' ? 'Região cadastrada' : 'OpenStreetMap'}
+            </span>
+          </dd>
         </div>
       </dl>
     </div>
