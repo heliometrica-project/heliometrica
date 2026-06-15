@@ -31,6 +31,22 @@ python backend/manage.py runserver
 curl http://localhost:8000/api/health/
 ```
 
+### Frontend
+
+```bash
+# 1. Instalar dependências
+cd frontend
+npm install
+
+# 2. Configurar variáveis de ambiente
+cp .env.example .env
+
+# 3. Iniciar servidor de desenvolvimento
+npm run dev
+```
+
+O frontend será iniciado em `http://localhost:3000`.
+
 ## Convenções de commit
 
 Este projeto adota [Conventional Commits](https://www.conventionalcommits.org/).
