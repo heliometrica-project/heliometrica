@@ -1,28 +1,64 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-echo "==> Iniciando backend (Django)..."
+cleanup() {
+  echo ""
+  echo "==> Encerrando serviços..."
+  kill "${BACKEND_PID:-}" "${FRONTEND_PID:-}" 2>/dev/null || true
+}
+
+trap cleanup EXIT INT TERM
+
+echo "==> Preparando ambiente..."
+
+# ------------------------------------------------------------------
+# Backend
+# ------------------------------------------------------------------
+
 cd "$ROOT_DIR/backend"
+
 if [ ! -d ".venv" ]; then
-  echo "[ERRO] .venv não encontrado. Crie o ambiente virtual primeiro."
-  exit 1
+  echo "==> Criando ambiente virtual..."
+  python3 -m venv .venv
 fi
+
 source .venv/bin/activate
+
+echo "==> Instalando dependências do backend..."
+pip install -r requirements.txt
+
+# Executa migrations automaticamente
+echo "==> Aplicando migrations..."
+python manage.py migrate
+
+echo "==> Iniciando backend..."
 python manage.py runserver &
 BACKEND_PID=$!
 
-echo "==> Iniciando frontend (Vite)..."
+# ------------------------------------------------------------------
+# Frontend
+# ------------------------------------------------------------------
+
 cd "$ROOT_DIR/frontend"
+
+if [ ! -d "node_modules" ]; then
+  echo "==> Instalando dependências do frontend..."
+  npm install
+fi
+
+echo "==> Iniciando frontend..."
 npm run dev &
 FRONTEND_PID=$!
 
 echo ""
-echo "Backend:  http://localhost:8000"
-echo "Frontend: http://localhost:3000"
+echo "========================================"
+echo "Backend : http://localhost:8000"
+echo "Frontend: consulte a URL exibida pelo Vite"
+echo "========================================"
 echo ""
-echo "Pressione Ctrl+C para parar ambos."
+echo "Pressione Ctrl+C para encerrar."
+echo ""
 
-trap "kill $BACKEND_PID $FRONTEND_PID 2>/dev/null; exit" INT TERM
 wait

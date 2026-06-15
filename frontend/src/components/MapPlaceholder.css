@@ -1,0 +1,31 @@
+.map-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  background-color: #f7fafc;
+  border: 2px dashed #e2e8f0;
+  border-radius: 8px;
+  color: #a0aec0;
+}
+
+.map-placeholder__icon {
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.map-placeholder__text {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #718096;
+  margin: 0 0 0.5rem;
+}
+
+.map-placeholder__hint {
+  font-size: 0.875rem;
+  color: #a0aec0;
+  margin: 0;
+  text-align: center;
+  max-width: 280px;
+}

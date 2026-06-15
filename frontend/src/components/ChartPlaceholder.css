@@ -1,0 +1,62 @@
+.chart-placeholder {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.chart-placeholder__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.chart-placeholder__canvas {
+  padding: 1rem 0 0;
+}
+
+.chart-placeholder__bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 160px;
+  padding: 0 0.25rem;
+}
+
+.chart-placeholder__bar {
+  flex: 1;
+  background: linear-gradient(to top, #3182ce, #63b3ed);
+  border-radius: 4px 4px 0 0;
+  min-height: 8px;
+  transition: height 0.3s ease;
+  opacity: 0.7;
+}
+
+.chart-placeholder__bar:nth-child(even) {
+  opacity: 0.5;
+}
+
+.chart-placeholder__axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e2e8f0;
+  font-size: 0.6875rem;
+  color: #a0aec0;
+}
+
+.chart-placeholder__axis span {
+  flex: 1;
+  text-align: center;
+}
+
+.chart-placeholder__hint {
+  font-size: 0.8125rem;
+  color: #a0aec0;
+  text-align: center;
+  margin: 1rem 0 0;
+}

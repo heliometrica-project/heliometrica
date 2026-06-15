@@ -1,0 +1,24 @@
+.dashboard {
+  display: flex;
+  min-height: calc(100vh - 64px - 53px);
+  margin: -2rem -1rem;
+}
+
+.dashboard__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+.dashboard__map {
+  flex: 1;
+}
+
+.dashboard__bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
