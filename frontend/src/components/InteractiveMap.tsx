@@ -20,18 +20,7 @@ function fixLeafletIcons() {
 
 fixLeafletIcons()
 
-const selectedIcon = new L.Icon({
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-  className: 'marker-selected',
-})
-
-const defaultIcon = new L.Icon({
+const markerIcon = new L.Icon({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
@@ -52,7 +41,7 @@ function isValidCoordinate(region: Region): boolean {
   )
 }
 
-function getCenter(regions: Region[]): [number, number] {
+function getDefaultCenter(regions: Region[]): [number, number] {
   const valid = regions.filter(isValidCoordinate)
   if (valid.length > 0) {
     return [Number(valid[0].latitude), Number(valid[0].longitude)]
@@ -89,10 +78,8 @@ export function InteractiveMap({ regions, selectedId, onSelect }: InteractiveMap
   const selectedRegion = regions.find((r) => r.id === selectedId) ?? null
   const center = selectedRegion && isValidCoordinate(selectedRegion)
     ? [Number(selectedRegion.latitude), Number(selectedRegion.longitude)] as [number, number]
-    : getCenter(regions)
+    : getDefaultCenter(regions)
   const zoom = selectedRegion && isValidCoordinate(selectedRegion) ? REGION_ZOOM : BRAZIL_ZOOM
-
-  const validRegions = regions.filter(isValidCoordinate)
 
   return (
     <div className="interactive-map">
@@ -107,22 +94,22 @@ export function InteractiveMap({ regions, selectedId, onSelect }: InteractiveMap
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {validRegions.map((region) => (
+        {selectedRegion && isValidCoordinate(selectedRegion) && (
           <Marker
-            key={region.id}
-            position={[Number(region.latitude), Number(region.longitude)]}
-            icon={region.id === selectedId ? selectedIcon : defaultIcon}
+            key={selectedRegion.id}
+            position={[Number(selectedRegion.latitude), Number(selectedRegion.longitude)]}
+            icon={markerIcon}
             eventHandlers={{
-              click: () => onSelect(region),
+              click: () => onSelect(selectedRegion),
             }}
           >
             <Popup>
-              <strong>{region.name}</strong>
+              <strong>{selectedRegion.name}</strong>
               <br />
-              {region.state} &mdash; {region.latitude}, {region.longitude}
+              {selectedRegion.state} &mdash; {selectedRegion.latitude}, {selectedRegion.longitude}
             </Popup>
           </Marker>
-        ))}
+        )}
 
         <MapUpdater region={selectedRegion} />
       </MapContainer>

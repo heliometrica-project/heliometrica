@@ -19,9 +19,6 @@ export function Dashboard() {
     apiClient.get<Region[]>('/regions/')
       .then((data) => {
         setRegions(data)
-        if (data.length > 0) {
-          setSelectedRegion(data[0])
-        }
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : 'Erro ao carregar regiões')
