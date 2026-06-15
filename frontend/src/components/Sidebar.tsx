@@ -14,19 +14,16 @@ export function Sidebar({ onSelect }: SidebarProps) {
 
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current)
-
     if (!query.trim()) {
       setResults([])
       return
     }
-
     setLoading(true)
     timer.current = setTimeout(async () => {
       const data = await searchLocation(query)
       setResults(data)
       setLoading(false)
-    }, 600)
-
+    }, 400)
     return () => {
       if (timer.current) clearTimeout(timer.current)
     }
@@ -35,14 +32,14 @@ export function Sidebar({ onSelect }: SidebarProps) {
   return (
     <aside className="sidebar">
       <div className="sidebar__header">
-        <h2 className="sidebar__title">Heliométrica</h2>
+        <h2 className="sidebar__title">Localização</h2>
       </div>
 
       <div className="sidebar__search">
         <input
           type="text"
           className="sidebar__input"
-          placeholder="Pesquisar localização..."
+          placeholder="Pesquisar localidade..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -52,18 +49,19 @@ export function Sidebar({ onSelect }: SidebarProps) {
       <div className="sidebar__body">
         {query && !loading && results.length === 0 && (
           <div className="sidebar__state">
-            <p>Nenhum resultado encontrado</p>
+            <p>Nenhum resultado encontrado para "{query}"</p>
           </div>
         )}
 
         {results.length > 0 && (
           <ul className="sidebar__items">
             {results.map((item, i) => {
-              const { name, state } = parseResult(item)
+              const { state } = parseResult(item)
               return (
                 <li
                   key={i}
                   className="sidebar__item"
+                  style={{ animationDelay: `${i * 0.04}s` }}
                   onClick={() =>
                     onSelect({
                       name: item.display_name,
@@ -86,7 +84,7 @@ export function Sidebar({ onSelect }: SidebarProps) {
                     }
                   }}
                 >
-                  <span className="sidebar__item-name">{name}</span>
+                  <span className="sidebar__item-name">{state || item.display_name.split(',')[0].trim()}</span>
                   <span className="sidebar__item-state">{item.display_name}</span>
                 </li>
               )
@@ -96,7 +94,7 @@ export function Sidebar({ onSelect }: SidebarProps) {
 
         {!query && (
           <div className="sidebar__state">
-            <p>Clique no mapa ou pesquise por uma localidade.</p>
+            <p>Clique no mapa ou digite para pesquisar uma localidade.</p>
           </div>
         )}
       </div>
