@@ -1,11 +1,24 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { apiClient } from '../api'
 import type { Region } from '../types'
-import { RegionList } from '../components/RegionList'
 import { InteractiveMap } from '../components/InteractiveMap'
 import { RegionDetailCard } from '../components/RegionDetailCard'
 import { ChartPlaceholder } from '../components/ChartPlaceholder'
 import './Dashboard.css'
+
+const MAX_DISTANCE_DEG = 0.5
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLng = ((lng2 - lng1) * Math.PI) / 180
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
 
 export function Dashboard() {
   const [regions, setRegions] = useState<Region[]>([])
@@ -17,18 +30,32 @@ export function Dashboard() {
     setLoading(true)
     setError(null)
     apiClient.get<Region[]>('/regions/')
-      .then((data) => {
-        setRegions(data)
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : 'Erro ao carregar regiões')
-      })
+      .then((data) => setRegions(data))
+      .catch((err) => setError(err instanceof Error ? err.message : 'Erro ao carregar regiões'))
       .finally(() => setLoading(false))
   }, [])
 
-  const handleSelect = (region: Region) => {
-    setSelectedRegion(region)
-  }
+  const handleMapClick = useCallback(
+    ({ lat, lng }: { lat: number; lng: number }) => {
+      let nearest: Region | null = null
+      let nearestDist = Infinity
+
+      for (const r of regions) {
+        const dist = haversineKm(lat, lng, Number(r.latitude), Number(r.longitude))
+        if (dist < nearestDist) {
+          nearestDist = dist
+          nearest = r
+        }
+      }
+
+      if (nearest && nearestDist <= MAX_DISTANCE_DEG * 111) {
+        setSelectedRegion(nearest)
+      } else {
+        setSelectedRegion(null)
+      }
+    },
+    [regions]
+  )
 
   if (loading) {
     return (
@@ -53,25 +80,16 @@ export function Dashboard() {
 
   return (
     <div className="dashboard">
-      <RegionList
-        regions={regions}
-        selectedId={selectedRegion?.id ?? null}
-        onSelect={handleSelect}
-      />
+      <div className="dashboard__map">
+        <InteractiveMap
+          selectedRegion={selectedRegion}
+          onMapClick={handleMapClick}
+        />
+      </div>
 
-      <div className="dashboard__content">
-        <div className="dashboard__map">
-          <InteractiveMap
-            regions={regions}
-            selectedId={selectedRegion?.id ?? null}
-            onSelect={handleSelect}
-          />
-        </div>
-
-        <div className="dashboard__bottom">
-          <RegionDetailCard region={selectedRegion} />
-          <ChartPlaceholder />
-        </div>
+      <div className="dashboard__bottom">
+        <RegionDetailCard region={selectedRegion} />
+        <ChartPlaceholder />
       </div>
     </div>
   )

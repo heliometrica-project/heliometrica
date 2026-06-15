@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import type { Region } from '../types'
 import 'leaflet/dist/leaflet.css'
@@ -7,7 +7,7 @@ import './InteractiveMap.css'
 
 const BRAZIL_CENTER: [number, number] = [-14.2350, -51.9253]
 const BRAZIL_ZOOM = 4
-const REGION_ZOOM = 8
+const REGION_ZOOM = 9
 
 function fixLeafletIcons() {
   delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl
@@ -30,26 +30,21 @@ const markerIcon = new L.Icon({
   shadowSize: [41, 41],
 })
 
-function isValidCoordinate(region: Region): boolean {
-  return (
-    region.latitude !== null &&
-    region.latitude !== undefined &&
-    region.longitude !== null &&
-    region.longitude !== undefined &&
-    !Number.isNaN(Number(region.latitude)) &&
-    !Number.isNaN(Number(region.longitude))
-  )
+interface InteractiveMapProps {
+  selectedRegion: Region | null
+  onMapClick: (latlng: { lat: number; lng: number }) => void
 }
 
-function getDefaultCenter(regions: Region[]): [number, number] {
-  const valid = regions.filter(isValidCoordinate)
-  if (valid.length > 0) {
-    return [Number(valid[0].latitude), Number(valid[0].longitude)]
-  }
-  return BRAZIL_CENTER
+function MapClickHandler({ onClick }: { onClick: (latlng: { lat: number; lng: number }) => void }) {
+  useMapEvents({
+    click: (e) => {
+      onClick({ lat: e.latlng.lat, lng: e.latlng.lng })
+    },
+  })
+  return null
 }
 
-function MapUpdater({ region }: { region: Region | null }) {
+function MapFlyTo({ region }: { region: Region | null }) {
   const map = useMap()
   const initial = useRef(true)
 
@@ -58,28 +53,23 @@ function MapUpdater({ region }: { region: Region | null }) {
       initial.current = false
       return
     }
-    if (region && isValidCoordinate(region)) {
-      map.flyTo([Number(region.latitude), Number(region.longitude)], REGION_ZOOM, {
-        duration: 0.8,
-      })
+    if (region) {
+      map.flyTo(
+        [Number(region.latitude), Number(region.longitude)],
+        REGION_ZOOM,
+        { duration: 0.8 }
+      )
     }
   }, [map, region])
 
   return null
 }
 
-interface InteractiveMapProps {
-  regions: Region[]
-  selectedId: number | null
-  onSelect: (region: Region) => void
-}
-
-export function InteractiveMap({ regions, selectedId, onSelect }: InteractiveMapProps) {
-  const selectedRegion = regions.find((r) => r.id === selectedId) ?? null
-  const center = selectedRegion && isValidCoordinate(selectedRegion)
+export function InteractiveMap({ selectedRegion, onMapClick }: InteractiveMapProps) {
+  const center = selectedRegion
     ? [Number(selectedRegion.latitude), Number(selectedRegion.longitude)] as [number, number]
-    : getDefaultCenter(regions)
-  const zoom = selectedRegion && isValidCoordinate(selectedRegion) ? REGION_ZOOM : BRAZIL_ZOOM
+    : BRAZIL_CENTER
+  const zoom = selectedRegion ? REGION_ZOOM : BRAZIL_ZOOM
 
   return (
     <div className="interactive-map">
@@ -94,14 +84,13 @@ export function InteractiveMap({ regions, selectedId, onSelect }: InteractiveMap
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {selectedRegion && isValidCoordinate(selectedRegion) && (
+        <MapClickHandler onClick={onMapClick} />
+
+        {selectedRegion && (
           <Marker
             key={selectedRegion.id}
             position={[Number(selectedRegion.latitude), Number(selectedRegion.longitude)]}
             icon={markerIcon}
-            eventHandlers={{
-              click: () => onSelect(selectedRegion),
-            }}
           >
             <Popup>
               <strong>{selectedRegion.name}</strong>
@@ -111,7 +100,7 @@ export function InteractiveMap({ regions, selectedId, onSelect }: InteractiveMap
           </Marker>
         )}
 
-        <MapUpdater region={selectedRegion} />
+        <MapFlyTo region={selectedRegion} />
       </MapContainer>
     </div>
   )
