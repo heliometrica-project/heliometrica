@@ -143,7 +143,7 @@ A API estará disponível em `http://localhost:8000`.
 ## Endpoints disponíveis
 
 | Método | URL | Descrição |
-|---|---|---|
+|---|---|---|---|
 | `POST` | `/api/auth/register/` | Cadastro de usuario |
 | `POST` | `/api/auth/login/` | Login com retorno de tokens `access` e `refresh` |
 | `POST` | `/api/auth/refresh/` | Renovacao do token de acesso |
@@ -152,6 +152,12 @@ A API estará disponível em `http://localhost:8000`.
 | `GET` | `/api/regions/` | Listar todas as regiões |
 | `GET` | `/api/regions/{id}/` | Detalhe de uma região |
 | `GET` | `/api/regions/?search=...` | Buscar regiões por nome ou estado |
+| `GET` | `/api/modules/` | Listar módulos solares do usuário autenticado |
+| `POST` | `/api/modules/` | Cadastrar novo módulo solar |
+| `GET` | `/api/modules/{id}/` | Detalhe de um módulo solar |
+| `PUT` | `/api/modules/{id}/` | Atualizar módulo solar (todos os campos) |
+| `PATCH` | `/api/modules/{id}/` | Atualizar módulo solar (parcial) |
+| `DELETE` | `/api/modules/{id}/` | Excluir módulo solar |
 | `GET` | `/api/weather/?region_id={id}` | Consultar clima por coordenada da região e salvar snapshot |
 | — | `/admin/` | Django Admin |
 
@@ -286,15 +292,14 @@ sqlite3 db.sqlite3 ".tables"
 A suite de testes cobre os 4 apps do backend:
 
 | App | Classes de teste | Total de testes |
-|---|---|---|
-| `core` | `RegionModelTest`, `SolarModuleModelTest` | 11 |
+|---|---|---|---|
+| `core` | `RegionModelTest`, `SolarModuleModelTest`, `RegionAPITest`, `SolarModuleAPITest` | 33 |
 | `estimates` | `WeatherSnapshotModelTest`, `EnergyEstimateModelTest` | 18 |
 | `reporting` | `GenerationHistoryModelTest`, `ReportExportModelTest` | 15 |
-| `regions` | `RegionAPITest` | 12 |
 | `health` | `HealthCheckTest` | 1 |
-| **Total** | 8 | **57** |
+| **Total** | 9 | **67** |
 
-Cenários cobertos: criação de instâncias, valores padrão, `__str__`, constraints (`unique_together`), campos nullable, comportamento de FKs (`CASCADE`, `SET_NULL`), timestamps automáticos, CRUD via API REST, busca textual, e health check.
+Cenários cobertos: criação de instâncias, valores padrão, `__str__`, constraints (`unique_together`), campos nullable, comportamento de FKs (`CASCADE`, `SET_NULL`), timestamps automáticos, CRUD via API REST, busca textual, health check, e isolamento de dados entre usuários.
 
 ---
 
