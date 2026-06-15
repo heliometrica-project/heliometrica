@@ -1,38 +1,25 @@
-import { useState, useEffect, useCallback } from 'react'
-import { apiClient } from '../api'
+import { useState, useMemo } from 'react'
 import type { Region } from '../types'
 import './RegionList.css'
 
 interface RegionListProps {
+  regions: Region[]
   selectedId: number | null
   onSelect: (region: Region) => void
 }
 
-export function RegionList({ selectedId, onSelect }: RegionListProps) {
-  const [regions, setRegions] = useState<Region[]>([])
+export function RegionList({ regions, selectedId, onSelect }: RegionListProps) {
   const [search, setSearch] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
-  const fetchRegions = useCallback(async (query: string) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const data = await apiClient.get<Region[]>('/regions/', {
-        params: query ? { search: query } : undefined,
-      })
-      setRegions(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar regiões')
-      setRegions([])
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchRegions(search)
-  }, [search, fetchRegions])
+  const filtered = useMemo(() => {
+    if (!search.trim()) return regions
+    const q = search.toLowerCase()
+    return regions.filter(
+      (r) =>
+        r.name.toLowerCase().includes(q) ||
+        r.state.toLowerCase().includes(q)
+    )
+  }, [regions, search])
 
   return (
     <aside className="region-list">
@@ -51,34 +38,21 @@ export function RegionList({ selectedId, onSelect }: RegionListProps) {
       </div>
 
       <div className="region-list__body">
-        {loading && (
-          <div className="region-list__state">
-            <div className="region-list__spinner" />
-            <p>Carregando regiões...</p>
-          </div>
-        )}
-
-        {!loading && error && (
-          <div className="region-list__state region-list__state--error">
-            <p>{error}</p>
-          </div>
-        )}
-
-        {!loading && !error && regions.length === 0 && search && (
-          <div className="region-list__state region-list__state--empty">
-            <p>Nenhuma região encontrada para "{search}"</p>
-          </div>
-        )}
-
-        {!loading && !error && regions.length === 0 && !search && (
+        {regions.length === 0 && (
           <div className="region-list__state region-list__state--empty">
             <p>Nenhuma região cadastrada</p>
           </div>
         )}
 
-        {!loading && !error && regions.length > 0 && (
+        {regions.length > 0 && filtered.length === 0 && (
+          <div className="region-list__state region-list__state--empty">
+            <p>Nenhuma região encontrada para "{search}"</p>
+          </div>
+        )}
+
+        {filtered.length > 0 && (
           <ul className="region-list__items">
-            {regions.map((region) => (
+            {filtered.map((region) => (
               <li
                 key={region.id}
                 className={`region-list__item ${selectedId === region.id ? 'region-list__item--selected' : ''}`}
