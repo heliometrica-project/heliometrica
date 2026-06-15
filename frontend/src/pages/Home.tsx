@@ -1,36 +1,40 @@
-import { useEffect, useState } from 'react'
-import { apiClient } from '../api'
+import { Link } from 'react-router-dom'
 import './Home.css'
 
-interface HealthResponse {
-  status: string
-}
+const features = [
+  { icon: '☀️', title: 'Mapa Interativo', desc: 'Navegue pelo mapa e selecione localidades para análise solar.' },
+  { icon: '📊', title: 'Dados Solares', desc: 'Visualize métricas de irradiação e eficiência energética.' },
+  { icon: '🔍', title: 'Pesquisa Rápida', desc: 'Encontre rapidamente qualquer região pelo nome ou coordenadas.' },
+]
 
 export function Home() {
-  const [health, setHealth] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    apiClient.get<HealthResponse>('/health/')
-      .then((data) => setHealth(data.status))
-      .catch((err) => setError(err.message))
-  }, [])
-
   return (
     <div className="home">
-      <section className="home__hero">
-        <h2 className="home__title">Bem-vindo ao Heliométrica</h2>
+      <div className="home__hero">
+        <span className="home__badge">Sistema de Análise Solar</span>
+        <h1 className="home__title">
+          Medição e Análise de<br />Eficiência Solar
+        </h1>
         <p className="home__subtitle">
-          Sistema de apoio à medição e análise de eficiência de energia solar
+          Plataforma para análise de dados de irradiação solar e eficiência energética
+          em diferentes regiões.
         </p>
-      </section>
+        <div className="home__actions">
+          <Link to="/dashboard" className="home__btn home__btn--primary">
+            Acessar Dashboard
+          </Link>
+        </div>
+      </div>
 
-      <section className="home__status">
-        <h3>Status da API</h3>
-        {error && <p className="home__error">Erro ao conectar: {error}</p>}
-        {health && <p className="home__ok">API conectada — status: {health}</p>}
-        {!health && !error && <p className="home__loading">Conectando à API...</p>}
-      </section>
+      <div className="home__features">
+        {features.map((f) => (
+          <div key={f.title} className="home__feature">
+            <div className="home__feature-icon">{f.icon}</div>
+            <h3>{f.title}</h3>
+            <p>{f.desc}</p>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

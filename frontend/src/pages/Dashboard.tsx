@@ -70,7 +70,7 @@ export function Dashboard() {
     return (
       <div className="dashboard">
         <div className="dashboard__error">
-          <p>Erro ao carregar dados: {error}</p>
+          <p>{error}</p>
         </div>
       </div>
     )

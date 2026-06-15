@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation, Link } from 'react-router-dom'
 import './RootLayout.css'
 
 export function RootLayout() {
@@ -9,10 +9,23 @@ export function RootLayout() {
     <div className="root-layout">
       <header className="root-header">
         <div className="root-header__container">
-          <h1 className="root-header__title">Heliométrica</h1>
+          <Link to="/" className="root-header__brand">
+            <div className="root-header__logo">H</div>
+            <span className="root-header__title">Heliométrica</span>
+          </Link>
           <nav className="root-header__nav">
-            <a href="/" className="root-header__link">Início</a>
-            <a href="/dashboard" className="root-header__link">Dashboard</a>
+            <Link
+              to="/"
+              className={`root-header__link ${location.pathname === '/' ? 'root-header__link--active' : ''}`}
+            >
+              Início
+            </Link>
+            <Link
+              to="/dashboard"
+              className={`root-header__link ${isDashboard ? 'root-header__link--active' : ''}`}
+            >
+              Dashboard
+            </Link>
           </nav>
         </div>
       </header>
@@ -23,7 +36,7 @@ export function RootLayout() {
 
       <footer className="root-footer">
         <div className="root-footer__container">
-          <p>Heliométrica &mdash; Sistema de apoio à medição e análise de eficiência de energia solar</p>
+          Heliométrica &mdash; Sistema de apoio à medição e análise de eficiência de energia solar
         </div>
       </footer>
     </div>
