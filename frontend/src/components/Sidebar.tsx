@@ -66,7 +66,7 @@ export function Sidebar({ onSelect }: SidebarProps) {
                   className="sidebar__item"
                   onClick={() =>
                     onSelect({
-                      name,
+                      name: item.display_name,
                       state,
                       lat: Number(item.lat),
                       lng: Number(item.lon),
@@ -78,7 +78,7 @@ export function Sidebar({ onSelect }: SidebarProps) {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault()
                       onSelect({
-                        name,
+                        name: item.display_name,
                         state,
                         lat: Number(item.lat),
                         lng: Number(item.lon),

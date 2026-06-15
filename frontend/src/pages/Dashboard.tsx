@@ -81,9 +81,10 @@ export function Dashboard() {
 
       const result = await reverseGeocode(lat, lng)
       if (result) {
-        const { name, state } = parseResult(result)
+        const { state } = parseResult(result)
+        const parts = result.display_name.split(',').slice(0, 3).join(',').trim()
         setSelectedLocation({
-          name,
+          name: parts,
           state,
           latitude: Number(result.lat),
           longitude: Number(result.lon),
