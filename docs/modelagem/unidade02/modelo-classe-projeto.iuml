@@ -24,9 +24,9 @@
     class HistoricoGeracao{
         - lista_estimativas: List<EstimativaEnergetica>
         - data_atualizacao: Date
-        + salvar(): void
-        + editar(): void
-        + excluir(): void
+        + salvar(estimativa: EstimativaEnergetica): void
+        + editar(estimativa: EstimativaEnergetica): void
+        + excluir(id: String): void
         + listar(): List<EstimativaEnergetica>
     }
 
@@ -34,14 +34,14 @@
         - valor_estimado: Double
         - data_calculo: Date
         - eficiencia_calculada: Double
-        + calcular_estimativa(): Double
+        + calcular_estimativa(modulo: ModuloSolar, regiao: Regiao): Double
     }
 
     class Relatorio{
         - tipo_formato: String
         - data_exportacao: Date
         - conteudo: String
-        + exportar(): void
+        + exportar(): Boolean
     }
 
     class Regiao{
@@ -49,16 +49,14 @@
         - coordenadas: String
         - eficiencia_energetica: Double
         - historico_meteorologico: String
-        + buscar_dados(): String
-        + visualizar_eficiencia(): void
+        + visualizar_eficiencia(): Double
     }
 
     class APIClima{
-        + buscar_dados_meteorologicos(): String
-        + retornar_indices(): String
+        + buscar_dados_meteorologicos(regiao: Regiao): String   
     }
 
-    Usuario "1" *-down- "0..1" HistoricoGeracao: possui >
+    Usuario "1" -down-* "0..1" HistoricoGeracao: possui >
     Usuario "1" -right- "0..*" ModuloSolar: cadastra >
 
     HistoricoGeracao "1" o-down- "0..*" EstimativaEnergetica: armazena >
