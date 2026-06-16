@@ -5,7 +5,11 @@ start
 
 :Selecionar região no mapa;
 
-if (Usuário autenticado?) then (Sim)
+while (Usuário autenticado?) is (Não)
+    :Solicitar login/cadastro;
+endwhile (Sim)
+
+repeat
 
     :Escolher módulo solar;
 
@@ -17,51 +21,46 @@ if (Usuário autenticado?) then (Sim)
 
     :Validar dados do módulo;
 
-    while (Dados válidos?) is (Não)
-        :Exibir mensagens de validação;
-        :Escolher módulo solar;
-        :Validar dados do módulo;
-    endwhile (Sim)
+    if (Dados válidos?) then (Sim)
+        break
+    else (Não)
+        :Exibir mensagem de erro;
+    endif
 
-    :Solicitar dados meteorológicos;
+repeat while (Dados válidos?) is (Não)
 
-    if (API climática respondeu?) then (Sim)
+:Consultar dados climáticos;
 
-        :Receber dados;
+if (Dados climáticos disponíveis?) then (Sim)
 
-        :Calcular estimativa energética;
+    :Receber dados climáticos;
+
+    :Calcular estimativa energética;
+
+    fork
         :Gerar indicadores\n(kWh/dia, mês e ano);
+    fork again
         :Gerar gráfico da estimativa;
-        :Exibir resultado ao usuário;
+    end fork
 
-        fork
+    if (Salvar histórico?) then (Sim)
 
-            if (Salvar histórico?) then (Sim)
-                :Salvar estimativa no histórico;
-            endif
-
-        fork again
-
-            if (Exportar relatório?) then (Sim)
-                :Gerar arquivo CSV;
-                :Registrar exportação;
-            endif
-
-        end fork
-
-        :Finalizar processo;
-        stop
+        :Salvar estimativa no histórico;
 
     else (Não)
 
-        :Exibir erro de indisponibilidade\n da API climática;
-        stop
+        if (Exportar relatório?) then (Sim)
+            :Gerar arquivo CSV;
+            :Registrar exportação;
+        endif
 
     endif
 
+    stop
+
 else (Não)
 
-    :Solicitar login/cadastro;
+    :Exibir indisponibilidade dos dados climáticos;
     stop
 
 endif
