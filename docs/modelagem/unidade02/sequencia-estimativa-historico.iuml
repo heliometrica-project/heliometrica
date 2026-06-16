@@ -6,7 +6,7 @@ skinparam linetype ortho
 title Diagrama de Sequência: Estimativa Energética e Histórico
 
 actor "Usuário" as user
-participant "Frontend" as fe
+participant "TelaEstimativaEnergetica" as tela
 participant "grafico:ComponenteGrafico" as grafico
 participant ":Regiao" as regiao
 participant ":APIClima" as apiclima
@@ -16,10 +16,10 @@ participant "historico:HistoricoGeracao" as historico
 
 == 1. Consulta de Clima e Região ==
 autonumber 1.1
-user -> fe: Seleciona região
-activate fe
+user -> tela: Seleciona região
+activate tela
 
-fe -> regiao: buscar_dados(regiao.id)
+tela -> regiao: buscar_dados(regiao.id)
 activate regiao
 
 regiao -> apiclima: buscar_dados_meteorologicos(regiao.coordenadas)
@@ -28,45 +28,57 @@ activate apiclima
 apiclima --> regiao: dados_climaticos
 deactivate apiclima
 
-regiao --> fe: Regiao atualizada com historico_meteorologico
+regiao --> tela: Regiao updated com historico_meteorologico
 deactivate regiao
+
+tela --> user: Exibe dados climáticos da região
+deactivate tela
 
 == 2. Definição do Equipamento ==
 autonumber 2.1
-user -> fe: Informa dados do painel solar
-fe -> modulo ** : <<create>>
+user -> tela: Informa dados do painel solar
+activate tela
+
+tela -> modulo ** : <<create>>
 activate modulo
-fe -> modulo: cadastrar_especificacoes(potencia, eficiencia, area, fabricante)
-modulo --> fe: modulo_cadastrado
+tela -> modulo: cadastrar_especificacoes(potencia, eficiencia, area, fabricante)
+modulo --> tela: modulo_cadastrado
 deactivate modulo
+
+tela --> user: Confirma especificações do equipamento
+deactivate tela
 
 == 3. Cálculo da Estimativa e Renderização ==
 autonumber 3.1
-user -> fe: Solicita estimativa de produção
-fe -> estimativa ** : <<create>>
+user -> tela: Solicita estimativa de produção
+activate tela
+
+tela -> estimativa ** : <<create>>
 activate estimativa
-fe -> estimativa: calcular_estimativa(regiao, modulo)
-estimativa --> fe: dados_estimativa
+tela -> estimativa: calcular_estimativa(regiao, modulo)
+estimativa --> tela: dados_estimativa
 deactivate estimativa
 
-fe -> grafico ** : <<create>>
+tela -> grafico ** : <<create>>
 activate grafico
-fe -> grafico: renderizar(dados_estimativa)
-grafico --> fe: componente_visual
+tela -> grafico: renderizar(dados_estimativa)
+grafico --> tela: componente_visual
 deactivate grafico
 
-fe --> user: Exibe dashboard com a estimativa e o gráfico
+tela --> user: Exibe dashboard com a estimativa e o gráfico
+deactivate tela
 
 == 4. Salvamento no Histórico ==
 autonumber 4.1
-user -> fe: Seleciona "Salvar no Histórico"
-fe -> historico: salvar(estimativa)
+user -> tela: Seleciona "Salvar no Histórico"
+activate tela
+
+tela -> historico: salvar(estimativa)
 activate historico
 
-historico --> fe: status_salvamento
+historico --> tela: status_salvamento
 deactivate historico
 
-fe --> user: Feedback de sucesso
-
-deactivate fe
+tela --> user: Feedback de sucesso
+deactivate tela
 @enduml
