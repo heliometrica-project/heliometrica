@@ -56,6 +56,10 @@ Usuario -> Frontend: Informa especificacoes do modulo solar
 Frontend -> API: POST /modulos-solares\nAuthorization: Bearer token\n(especificacoes)
 activate API
 API -> UserService: validarToken(token)
+alt Credenciais invalidas ou token ausente/invalido
+    API --> Frontend: 401 Unauthorized\n(erro de autenticacao)
+    Frontend --> Usuario: Solicita novo login
+end 
 activate UserService
 UserService --> API: usuario autenticado
 deactivate UserService
@@ -71,9 +75,6 @@ API --> Frontend: 201 Created\n(modulo solar)
 deactivate API
 Frontend --> Usuario: Exibe modulo solar cadastrado
 
-alt Credenciais invalidas ou token ausente/invalido
-    API --> Frontend: 401 Unauthorized\n(erro de autenticacao)
-    Frontend --> Usuario: Solicita novo login
-end
+
 
 @enduml
