@@ -6,20 +6,20 @@ skinparam linetype ortho
 title Diagrama de Sequência: Estimativa Energética e Histórico
 
 actor "Usuário" as user
-participant "Frontend" as fe
+participant "Tela Estimativa Energética" as tee
 participant "grafico:ComponenteGrafico" as grafico
-participant ":Regiao" as regiao
-participant ":APIClima" as apiclima
+participant "Regiao" as regiao
+participant "APIClima" as apiclima
 participant "modulo:ModuloSolar" as modulo
 participant "estimativa:EstimativaEnergetica" as estimativa
 participant "historico:HistoricoGeracao" as historico
 
 == 1. Consulta de Clima e Região ==
 autonumber 1.1
-user -> fe: Seleciona região
-activate fe
+user -> tee: Seleciona região
+activate tee
 
-fe -> regiao: buscar_dados(regiao.id)
+tee -> regiao: buscar_dados(regiao.id)
 activate regiao
 
 regiao -> apiclima: buscar_dados_meteorologicos(regiao.coordenadas)
@@ -28,45 +28,57 @@ activate apiclima
 apiclima --> regiao: dados_climaticos
 deactivate apiclima
 
-regiao --> fe: Regiao atualizada com historico_meteorologico
+regiao --> tee: Regiao atualizada com historico_meteorologico
 deactivate regiao
+
+tee --> user: Retorna Região Selecionada
+
+deactivate tee
 
 == 2. Definição do Equipamento ==
 autonumber 2.1
-user -> fe: Informa dados do painel solar
-fe -> modulo ** : <<create>>
+user -> tee: Informa dados do painel solar
+activate tee
+
+tee -> modulo ** : <<create>>
 activate modulo
-fe -> modulo: cadastrar_especificacoes(potencia, eficiencia, area, fabricante)
-modulo --> fe: modulo_cadastrado
+tee -> modulo: cadastrar_especificacoes(potencia, eficiencia, area, fabricante)
+modulo --> tee: modulo_cadastrado
 deactivate modulo
+
+tee --> user: feedback de sucesso
+deactivate tee
 
 == 3. Cálculo da Estimativa e Renderização ==
 autonumber 3.1
-user -> fe: Solicita estimativa de produção
-fe -> estimativa ** : <<create>>
+user -> tee: Solicita estimativa de produção
+activate tee
+tee -> estimativa ** : <<create>>
 activate estimativa
-fe -> estimativa: calcular_estimativa(regiao, modulo)
-estimativa --> fe: dados_estimativa
+tee -> estimativa: calcular_estimativa(regiao, modulo)
+estimativa --> tee: dados_estimativa
 deactivate estimativa
 
-fe -> grafico ** : <<create>>
+tee -> grafico ** : <<create>>
 activate grafico
-fe -> grafico: renderizar(dados_estimativa)
-grafico --> fe: componente_visual
+tee -> grafico: renderizar(dados_estimativa)
+grafico --> tee: componente_visual
 deactivate grafico
 
-fe --> user: Exibe dashboard com a estimativa e o gráfico
+tee --> user: Exibe dashboard com a estimativa e o gráfico
+deactivate tee
 
 == 4. Salvamento no Histórico ==
 autonumber 4.1
-user -> fe: Seleciona "Salvar no Histórico"
-fe -> historico: salvar(estimativa)
+user -> tee: Seleciona "Salvar no Histórico"
+activate tee
+tee -> historico: salvar(estimativa)
 activate historico
 
-historico --> fe: status_salvamento
+historico --> tee: status_salvamento
 deactivate historico
 
-fe --> user: Feedback de sucesso
+tee --> user: feedback de sucesso
 
-deactivate fe
+deactivate tee
 @enduml
