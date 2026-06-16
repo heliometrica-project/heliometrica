@@ -99,6 +99,12 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
 
+WEATHER_API_BASE_URL = config(
+    'WEATHER_API_BASE_URL',
+    default='https://api.open-meteo.com/v1/forecast',
+)
+WEATHER_API_TIMEOUT_SECONDS = config('WEATHER_API_TIMEOUT_SECONDS', default=5, cast=int)
+
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
     default='http://localhost:3000,http://127.0.0.1:3000',
