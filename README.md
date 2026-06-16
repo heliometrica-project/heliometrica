@@ -124,6 +124,39 @@ npm run dev
 
 O frontend será iniciado em `http://localhost:3000`.
 
+## Ferramentas de Qualidade
+
+### Backend (ruff)
+
+```bash
+# Ativar ambiente virtual (se não estiver ativo)
+source .venv/bin/activate
+
+# Verificar lint
+ruff check backend/
+
+# Aplicar correções automáticas
+ruff check --fix backend/
+
+# Verificar formatação
+ruff format --check backend/
+
+# Aplicar formatação
+ruff format backend/
+```
+
+### Frontend (ESLint)
+
+```bash
+cd frontend
+
+# Verificar lint
+npm run lint
+
+# Aplicar correções automáticas
+npm run lint:fix
+```
+
 ## Documentação Disponível
 
 | Documento | Localização | Descrição |
