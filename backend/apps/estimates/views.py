@@ -27,9 +27,18 @@ class WeatherView(APIView):
             )
 
         try:
-            snapshot = WeatherService().get_snapshot(region)
-        except WeatherServiceError as exc:
-            return Response({'detail': str(exc)}, status=status.HTTP_502_BAD_GATEWAY)
+            snapshot, is_fallback = WeatherService().get_snapshot(region)
+        except WeatherServiceError:
+            return Response(
+                {'detail': 'Falha ao consultar dados meteorologicos. Nenhum cache disponivel.'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
 
+        snapshot.is_fallback = is_fallback
         serializer = WeatherSnapshotSerializer(snapshot)
-        return Response(serializer.data)
+        data = serializer.data
+
+        if is_fallback:
+            data['warning'] = 'Dados em cache (API indisponivel).'
+
+        return Response(data)

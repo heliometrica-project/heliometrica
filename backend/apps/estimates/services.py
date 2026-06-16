@@ -1,7 +1,7 @@
 import json
 import logging
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from urllib import parse, request
 from urllib.error import HTTPError, URLError
@@ -38,10 +38,14 @@ class WeatherService:
         self.timeout = timeout or settings.WEATHER_API_TIMEOUT_SECONDS
         self.base_url = base_url or settings.WEATHER_API_BASE_URL
 
+    FALLBACK_DAYS = 7
+
     def get_snapshot(self, region):
+        today = timezone.localdate()
+
         cached_snapshot = WeatherSnapshot.objects.filter(
             region=region,
-            date=timezone.localdate(),
+            date=today,
             status__in=[WeatherSnapshot.STATUS_OK, WeatherSnapshot.STATUS_CACHED],
         ).first()
 
@@ -49,7 +53,7 @@ class WeatherService:
             if cached_snapshot.status != WeatherSnapshot.STATUS_CACHED:
                 cached_snapshot.status = WeatherSnapshot.STATUS_CACHED
                 cached_snapshot.save(update_fields=['status'])
-            return cached_snapshot
+            return cached_snapshot, False
 
         try:
             weather_data = self.fetch_by_coordinates(
@@ -57,6 +61,10 @@ class WeatherService:
                 longitude=region.longitude,
             )
         except WeatherServiceError:
+            fallback_snapshot = self._get_fallback_snapshot(region)
+            if fallback_snapshot:
+                return fallback_snapshot, True
+
             WeatherSnapshot.objects.get_or_create(
                 region=region,
                 date=timezone.localdate(),
@@ -79,7 +87,24 @@ class WeatherService:
                 'raw_json': weather_data.raw_json,
             },
         )
-        return snapshot
+        return snapshot, False
+
+    def _get_fallback_snapshot(self, region):
+        cutoff_date = timezone.localdate() - timedelta(days=self.FALLBACK_DAYS)
+
+        fallback = WeatherSnapshot.objects.filter(
+            region=region,
+            date__gte=cutoff_date,
+            status__in=[WeatherSnapshot.STATUS_OK, WeatherSnapshot.STATUS_CACHED],
+        ).order_by('-date').first()
+
+        if fallback:
+            if fallback.status != WeatherSnapshot.STATUS_CACHED:
+                fallback.status = WeatherSnapshot.STATUS_CACHED
+                fallback.save(update_fields=['status'])
+            return fallback
+
+        return None
 
     def fetch_by_coordinates(self, latitude, longitude):
         url = self._build_url(latitude=latitude, longitude=longitude)
