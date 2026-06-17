@@ -152,6 +152,15 @@ class EnergyEstimate(models.Model):
         verbose_name='Módulo Solar',
         help_text='Painel solar utilizado no cálculo. Preservado mesmo se o módulo for excluído.',
     )
+    weather_snapshot = models.ForeignKey(
+        'WeatherSnapshot',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='energy_estimates',
+        verbose_name='Snapshot Climático',
+        help_text='Snapshot climático utilizado no cálculo.',
+    )
     daily_kwh = models.DecimalField(
         max_digits=10,
         decimal_places=3,
