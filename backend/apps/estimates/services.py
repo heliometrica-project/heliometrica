@@ -9,7 +9,7 @@ from urllib.error import HTTPError, URLError
 from django.conf import settings
 from django.utils import timezone
 
-from apps.estimates.models import WeatherSnapshot
+from apps.estimates.models import EnergyEstimate, WeatherSnapshot
 
 logger = logging.getLogger(__name__)
 
@@ -154,3 +154,50 @@ class WeatherService:
 
     def _decimal_from_api(self, value, quantizer):
         return Decimal(str(value)).quantize(Decimal(quantizer), rounding=ROUND_HALF_UP)
+
+
+class EstimationServiceError(Exception):
+    pass
+
+
+class EstimationService:
+    PR = Decimal('0.80')
+
+    def estimate(self, user, region, solar_module, weather_snapshot):
+        solar_module_power = Decimal(str(solar_module.power_wp))
+        solar_module_qty = Decimal(str(solar_module.quantity))
+        irradiation = Decimal(str(weather_snapshot.irradiation))
+        efficiency = Decimal(str(solar_module.efficiency))
+
+        if solar_module_power <= 0:
+            raise EstimationServiceError('Potência do módulo deve ser maior que zero.')
+        if solar_module_qty <= 0:
+            raise EstimationServiceError('Quantidade de módulos deve ser maior que zero.')
+        if efficiency <= 0 or efficiency > 100:
+            raise EstimationServiceError('Eficiência do módulo deve estar entre 0 e 100.')
+        if irradiation <= 0:
+            raise EstimationServiceError('Irradiação deve ser maior que zero.')
+
+        installed_power_kw = (solar_module_power * solar_module_qty) / Decimal('1000')
+
+        daily_kwh = (installed_power_kw * irradiation * self.PR).quantize(
+            Decimal('0.01'), rounding=ROUND_HALF_UP,
+        )
+        monthly_kwh = (daily_kwh * 30).quantize(
+            Decimal('0.001'), rounding=ROUND_HALF_UP,
+        )
+        yearly_kwh = (daily_kwh * 365).quantize(
+            Decimal('0.001'), rounding=ROUND_HALF_UP,
+        )
+
+        estimate = EnergyEstimate.objects.create(
+            user=user,
+            region=region,
+            module=solar_module,
+            weather_snapshot=weather_snapshot,
+            daily_kwh=daily_kwh,
+            monthly_kwh=monthly_kwh,
+            yearly_kwh=yearly_kwh,
+            efficiency_index=efficiency,
+        )
+        return estimate

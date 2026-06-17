@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.utils import timezone
 
-from apps.estimates.models import WeatherSnapshot
+from apps.estimates.models import EnergyEstimate, WeatherSnapshot
 
 
 class WeatherSnapshotSerializer(serializers.ModelSerializer):
@@ -35,3 +35,24 @@ class WeatherSnapshotSerializer(serializers.ModelSerializer):
                 return f'Dados em cache de {obj.date.strftime("%d/%m/%Y")} (API indisponível).'
             return 'Dados em cache (API indisponível).'
         return None
+
+
+class EstimateInputSerializer(serializers.Serializer):
+    region_id = serializers.IntegerField()
+    module_id = serializers.IntegerField()
+
+
+class EstimateOutputSerializer(serializers.ModelSerializer):
+    annual_kwh = serializers.DecimalField(
+        source='yearly_kwh', max_digits=10, decimal_places=3, read_only=True,
+    )
+
+    class Meta:
+        model = EnergyEstimate
+        fields = [
+            'id',
+            'daily_kwh',
+            'monthly_kwh',
+            'annual_kwh',
+            'efficiency_index',
+        ]
