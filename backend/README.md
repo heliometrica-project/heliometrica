@@ -159,6 +159,7 @@ A API estará disponível em `http://localhost:8000`.
 | `PATCH` | `/api/modules/{id}/` | Atualizar módulo solar (parcial) |
 | `DELETE` | `/api/modules/{id}/` | Excluir módulo solar |
 | `GET` | `/api/weather/?region_id={id}` | Consultar clima por coordenada da região e salvar snapshot |
+| `POST` | `/api/estimates/` | Estimar produção energética (exige Bearer token). Payload: `{"region_id": 1, "module_id": 3}` |
 | — | `/admin/` | Django Admin |
 
 ---
@@ -195,6 +196,62 @@ Painel solar cadastrado pelo usuário com especificações técnicas.
 
 ---
 
+## Fórmula de Estimativa Energética
+
+A estimativa de produção solar utiliza a seguinte fórmula:
+
+### Potência Instalada
+
+```
+potencia_instalada_kW = (power_Wp × quantidade) / 1000
+```
+
+### Energia Diária
+
+```
+energia_dia_kWh = potencia_instalada_kW × irradiacao_kWh_m2_dia × PR
+```
+
+### Energia Mensal e Anual
+
+```
+energia_mes_kWh = energia_dia_kWh × 30
+energia_ano_kWh = energia_dia_kWh × 365
+```
+
+### Performance Ratio (PR)
+
+**PR = 0.80** (fixo para o MVP)
+
+Representa as perdas típicas do sistema fotovoltaico:
+- Inversor (conversão CC/CA)
+- Cabeamento e conexões
+- Sujeira e poluição dos painéis
+- Orientação e inclinação não-ideal
+- Temperatura média de operação
+
+### Índice de Eficiência
+
+O índice de eficiência armazenado é a própria eficiência do módulo solar cadastrada pelo usuário (campo `efficiency` do `SolarModule`). É retornado apenas para exibição e não influencia o cálculo no MVP.
+
+### Exemplo Completo
+
+**Entrada:**
+- Módulo solar: 540 Wp, 4 unidades, eficiência 20.9%
+- Irradiação solar: 5.35 kWh/m²/dia
+
+**Cálculo:**
+
+```
+potencia_instalada = (540 × 4) / 1000 = 2.16 kW
+energia_dia = 2.16 × 5.35 × 0.80 = 9.24 kWh/dia
+energia_mes = 9.24 × 30 = 277.20 kWh/mês
+energia_ano = 9.24 × 365 = 3372.60 kWh/ano
+indice_eficiencia = 20.9%
+```
+
+---
+
 ### `estimates` — Estimativas de energia
 
 #### `WeatherSnapshot`
@@ -222,6 +279,7 @@ Estimativa de geração de energia de um sistema fotovoltaico.
 | `user` | `FK(User)` | Usuário que gerou a estimativa (CASCADE) |
 | `region` | `FK(Region)` | Região da estimativa (CASCADE) |
 | `module` | `FK(SolarModule)` | Módulo solar utilizado (SET_NULL, nullable) |
+| `weather_snapshot` | `FK(WeatherSnapshot)` | Snapshot climático utilizado no cálculo (SET_NULL, nullable) |
 | `daily_kwh` | `DecimalField(10,3)` | Geração diária estimada em kWh |
 | `monthly_kwh` | `DecimalField(10,3)` | Projeção mensal em kWh |
 | `yearly_kwh` | `DecimalField(10,3)` | Projeção anual em kWh |
@@ -289,15 +347,16 @@ sqlite3 db.sqlite3 ".tables"
 
 ## Testes
 
-A suite de testes cobre os 4 apps do backend:
+A suite de testes cobre os 5 apps do backend:
 
 | App | Classes de teste | Total de testes |
-|---|---|---|---|
+|---|---|---|
 | `core` | `RegionModelTest`, `SolarModuleModelTest`, `RegionAPITest`, `SolarModuleAPITest` | 33 |
-| `estimates` | `WeatherSnapshotModelTest`, `EnergyEstimateModelTest` | 18 |
+| `estimates` | `WeatherSnapshotModelTest`, `EnergyEstimateModelTest`, `EstimationServiceTest`, `EstimateAPITest` | 33 |
 | `reporting` | `GenerationHistoryModelTest`, `ReportExportModelTest` | 15 |
 | `health` | `HealthCheckTest` | 1 |
-| **Total** | 9 | **67** |
+| `accounts` | `AuthApiTest` | 3 |
+| **Total** | 13 | **94** |
 
 Cenários cobertos: criação de instâncias, valores padrão, `__str__`, constraints (`unique_together`), campos nullable, comportamento de FKs (`CASCADE`, `SET_NULL`), timestamps automáticos, CRUD via API REST, busca textual, health check, e isolamento de dados entre usuários.
 
