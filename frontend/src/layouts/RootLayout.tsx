@@ -1,9 +1,12 @@
 import { Outlet, useLocation, Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import './RootLayout.css'
 
 export function RootLayout() {
   const location = useLocation()
+  const { user, logout } = useAuth()
   const isDashboard = location.pathname === '/dashboard'
+  const isAuth = location.pathname === '/login' || location.pathname === '/register'
 
   return (
     <div className="root-layout">
@@ -26,6 +29,26 @@ export function RootLayout() {
             >
               Dashboard
             </Link>
+            {user ? (
+              <>
+                <span className="root-header__user">{user.username}</span>
+                <button
+                  onClick={logout}
+                  className="root-header__link root-header__link--btn"
+                >
+                  Sair
+                </button>
+              </>
+            ) : (
+              !isAuth && (
+                <Link
+                  to="/login"
+                  className="root-header__link root-header__link--btn"
+                >
+                  Entrar
+                </Link>
+              )
+            )}
           </nav>
         </div>
       </header>

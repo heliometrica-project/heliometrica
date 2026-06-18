@@ -1,4 +1,5 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+const TOKEN_KEY = 'heliometrica_token'
 
 interface RequestOptions {
   headers?: Record<string, string>
@@ -10,6 +11,10 @@ class ApiClient {
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl
+  }
+
+  private getToken(): string | null {
+    return localStorage.getItem(TOKEN_KEY)
   }
 
   private buildUrl(path: string, params?: Record<string, string>): string {
@@ -29,10 +34,12 @@ class ApiClient {
     options?: RequestOptions
   ): Promise<T> {
     const url = this.buildUrl(path, options?.params)
+    const token = this.getToken()
     const init: RequestInit = {
       method,
       headers: {
         'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options?.headers,
       },
     }
@@ -42,7 +49,19 @@ class ApiClient {
     const response = await fetch(url, init)
 
     if (!response.ok) {
-      throw new Error(`API error: ${response.status} ${response.statusText}`)
+      const errorBody = await response.json().catch(() => null)
+      let message = `${response.status} ${response.statusText}`
+      if (errorBody) {
+        if (typeof errorBody.detail === 'string') {
+          message = errorBody.detail
+        } else if (typeof errorBody === 'object') {
+          const fieldErrors = Object.entries(errorBody)
+            .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+            .join('; ')
+          if (fieldErrors) message = fieldErrors
+        }
+      }
+      throw new Error(message)
     }
 
     return response.json()
