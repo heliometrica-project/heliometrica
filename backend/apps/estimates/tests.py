@@ -12,7 +12,7 @@ Cobertura:
 
 import datetime
 import json
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
 from unittest.mock import patch
 from urllib.error import URLError
 
@@ -26,7 +26,12 @@ from rest_framework.test import APITestCase
 
 from apps.core.models import Region, SolarModule
 from apps.estimates.models import EnergyEstimate, WeatherSnapshot
-from apps.estimates.services import EstimationService, EstimationServiceError, WeatherService, WeatherServiceError
+from apps.estimates.services import (
+    EstimationService,
+    EstimationServiceError,
+    WeatherService,
+    WeatherServiceError,
+)
 
 User = get_user_model()
 
@@ -34,6 +39,7 @@ User = get_user_model()
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def make_user(username="testuser"):
     return User.objects.create_user(username=username, password="secret")
@@ -69,7 +75,9 @@ def make_energy_estimate(user, region, module=None, **kwargs):
         "losses_factor": Decimal("0.80"),
     }
     defaults.update(kwargs)
-    return EnergyEstimate.objects.create(user=user, region=region, module=module, **defaults)
+    return EnergyEstimate.objects.create(
+        user=user, region=region, module=module, **defaults
+    )
 
 
 def make_weather_snapshot(region, date=None, **kwargs):
@@ -90,6 +98,7 @@ def make_weather_snapshot(region, date=None, **kwargs):
 # WeatherSnapshot
 # ---------------------------------------------------------------------------
 
+
 class WeatherSnapshotModelTest(TestCase):
     """Testes do model WeatherSnapshot."""
 
@@ -108,12 +117,16 @@ class WeatherSnapshotModelTest(TestCase):
 
     def test_status_default_e_ok(self):
         """O campo status deve ser 'ok' por padrão."""
-        snap = WeatherSnapshot.objects.create(region=self.region, date=datetime.date(2024, 6, 2))
+        snap = WeatherSnapshot.objects.create(
+            region=self.region, date=datetime.date(2024, 6, 2)
+        )
         self.assertEqual(snap.status, WeatherSnapshot.STATUS_OK)
 
     def test_source_default_e_open_meteo(self):
         """O campo source deve ser 'open-meteo' por padrão."""
-        snap = WeatherSnapshot.objects.create(region=self.region, date=datetime.date(2024, 6, 3))
+        snap = WeatherSnapshot.objects.create(
+            region=self.region, date=datetime.date(2024, 6, 3)
+        )
         self.assertEqual(snap.source, "open-meteo")
 
     def test_campos_climaticos_podem_ser_nulos(self):
@@ -151,6 +164,7 @@ class WeatherSnapshotModelTest(TestCase):
 # ---------------------------------------------------------------------------
 # EnergyEstimate
 # ---------------------------------------------------------------------------
+
 
 class EnergyEstimateModelTest(TestCase):
     """Testes do model EnergyEstimate."""
@@ -215,6 +229,7 @@ class EnergyEstimateModelTest(TestCase):
 # WeatherService / API
 # ---------------------------------------------------------------------------
 
+
 class FakeWeatherResponse:
     def __init__(self, payload):
         self.payload = payload
@@ -226,7 +241,7 @@ class FakeWeatherResponse:
         return False
 
     def read(self):
-        return json.dumps(self.payload).encode('utf-8')
+        return json.dumps(self.payload).encode("utf-8")
 
 
 def make_open_meteo_payload(snapshot_date=None):
@@ -234,16 +249,16 @@ def make_open_meteo_payload(snapshot_date=None):
         snapshot_date = timezone.localdate()
 
     return {
-        'daily': {
-            'time': [snapshot_date.isoformat()],
-            'temperature_2m_mean': [28.5],
-            'cloud_cover_mean': [42],
-            'shortwave_radiation_sum': [20.52],
+        "daily": {
+            "time": [snapshot_date.isoformat()],
+            "temperature_2m_mean": [28.5],
+            "cloud_cover_mean": [42],
+            "shortwave_radiation_sum": [20.52],
         },
-        'daily_units': {
-            'temperature_2m_mean': 'C',
-            'cloud_cover_mean': '%',
-            'shortwave_radiation_sum': 'MJ/m2',
+        "daily_units": {
+            "temperature_2m_mean": "C",
+            "cloud_cover_mean": "%",
+            "shortwave_radiation_sum": "MJ/m2",
         },
     }
 
@@ -252,48 +267,57 @@ class WeatherApiTest(APITestCase):
     def setUp(self):
         self.region = make_region()
 
-    @patch('apps.estimates.services.request.urlopen')
-    def test_weather_endpoint_returns_normalized_data_and_saves_snapshot(self, urlopen_mock):
+    @patch("apps.estimates.services.request.urlopen")
+    def test_weather_endpoint_returns_normalized_data_and_saves_snapshot(
+        self, urlopen_mock
+    ):
         urlopen_mock.return_value = FakeWeatherResponse(make_open_meteo_payload())
 
-        response = self.client.get(reverse('weather'), {'region_id': self.region.id})
+        response = self.client.get(reverse("weather"), {"region_id": self.region.id})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['region'], self.region.id)
-        self.assertEqual(response.data['irradiation'], '5.700')
-        self.assertEqual(response.data['temperature'], '28.50')
-        self.assertEqual(response.data['cloud_cover'], '42.00')
-        self.assertEqual(response.data['status'], WeatherSnapshot.STATUS_OK)
+        self.assertEqual(response.data["region"], self.region.id)
+        self.assertEqual(response.data["irradiation"], "5.700")
+        self.assertEqual(response.data["temperature"], "28.50")
+        self.assertEqual(response.data["cloud_cover"], "42.00")
+        self.assertEqual(response.data["status"], WeatherSnapshot.STATUS_OK)
 
         snapshot = WeatherSnapshot.objects.get(region=self.region)
-        self.assertEqual(snapshot.irradiation, Decimal('5.700'))
-        self.assertEqual(snapshot.temperature, Decimal('28.50'))
-        self.assertEqual(snapshot.cloud_cover, Decimal('42.00'))
-        self.assertEqual(snapshot.raw_json['daily']['cloud_cover_mean'], [42])
+        self.assertEqual(snapshot.irradiation, Decimal("5.700"))
+        self.assertEqual(snapshot.temperature, Decimal("28.50"))
+        self.assertEqual(snapshot.cloud_cover, Decimal("42.00"))
+        self.assertEqual(snapshot.raw_json["daily"]["cloud_cover_mean"], [42])
 
-    @patch('apps.estimates.services.request.urlopen')
-    def test_weather_endpoint_returns_cached_snapshot_without_external_call(self, urlopen_mock):
+    @patch("apps.estimates.services.request.urlopen")
+    def test_weather_endpoint_returns_cached_snapshot_without_external_call(
+        self, urlopen_mock
+    ):
         snapshot = make_weather_snapshot(self.region, date=timezone.localdate())
 
-        response = self.client.get(reverse('weather'), {'region_id': self.region.id})
+        response = self.client.get(reverse("weather"), {"region_id": self.region.id})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['id'], snapshot.id)
-        self.assertEqual(response.data['status'], WeatherSnapshot.STATUS_CACHED)
+        self.assertEqual(response.data["id"], snapshot.id)
+        self.assertEqual(response.data["status"], WeatherSnapshot.STATUS_CACHED)
         urlopen_mock.assert_not_called()
 
-    @patch('apps.estimates.services.request.urlopen')
+    @patch("apps.estimates.services.request.urlopen")
     def test_weather_service_logs_technical_error(self, urlopen_mock):
-        urlopen_mock.side_effect = URLError('timeout')
+        urlopen_mock.side_effect = URLError("timeout")
 
-        with self.assertLogs('apps.estimates.services', level='ERROR') as logs:
+        with self.assertLogs("apps.estimates.services", level="ERROR") as logs:
             with self.assertRaises(WeatherServiceError):
                 WeatherService().get_snapshot(self.region)
 
         self.assertTrue(
-            any('Erro tecnico ao consultar API meteorologica externa.' in message for message in logs.output)
+            any(
+                "Erro tecnico ao consultar API meteorologica externa." in message
+                for message in logs.output
+            )
         )
-        snapshot = WeatherSnapshot.objects.get(region=self.region, date=timezone.localdate())
+        snapshot = WeatherSnapshot.objects.get(
+            region=self.region, date=timezone.localdate()
+        )
         self.assertEqual(snapshot.status, WeatherSnapshot.STATUS_ERROR)
 
 
@@ -301,23 +325,24 @@ class WeatherApiTest(APITestCase):
 # EstimationService
 # ---------------------------------------------------------------------------
 
+
 class EstimationServiceTest(TestCase):
     def setUp(self):
         self.user = make_user()
         self.region = make_region()
         self.module = SolarModule.objects.create(
             user=self.user,
-            model='RS-540M10',
-            manufacturer='Canadian Solar',
-            power_wp=Decimal('540.00'),
-            efficiency=Decimal('20.90'),
-            area_m2=Decimal('2.583'),
+            model="RS-540M10",
+            manufacturer="Canadian Solar",
+            power_wp=Decimal("540.00"),
+            efficiency=Decimal("20.90"),
+            area_m2=Decimal("2.583"),
             quantity=4,
         )
         self.snapshot = make_weather_snapshot(
             self.region,
             date=datetime.date(2024, 6, 1),
-            irradiation=Decimal('5.350'),
+            irradiation=Decimal("5.350"),
         )
         self.service = EstimationService()
 
@@ -328,7 +353,7 @@ class EstimationServiceTest(TestCase):
             solar_module=self.module,
             weather_snapshot=self.snapshot,
         )
-        self.assertEqual(estimate.daily_kwh, Decimal('9.240'))
+        self.assertEqual(estimate.daily_kwh, Decimal("9.240"))
 
     def test_calculo_mensal_correto(self):
         estimate = self.service.estimate(
@@ -337,7 +362,7 @@ class EstimationServiceTest(TestCase):
             solar_module=self.module,
             weather_snapshot=self.snapshot,
         )
-        self.assertEqual(estimate.monthly_kwh, Decimal('277.200'))
+        self.assertEqual(estimate.monthly_kwh, Decimal("277.200"))
 
     def test_calculo_anual_correto(self):
         estimate = self.service.estimate(
@@ -346,22 +371,22 @@ class EstimationServiceTest(TestCase):
             solar_module=self.module,
             weather_snapshot=self.snapshot,
         )
-        self.assertEqual(estimate.yearly_kwh, Decimal('3372.600'))
+        self.assertEqual(estimate.yearly_kwh, Decimal("3372.600"))
 
     def test_arredondamento_correto(self):
         module = SolarModule.objects.create(
             user=self.user,
-            model='Test',
-            manufacturer='Test',
-            power_wp=Decimal('100.00'),
-            efficiency=Decimal('15.00'),
-            area_m2=Decimal('1.000'),
+            model="Test",
+            manufacturer="Test",
+            power_wp=Decimal("100.00"),
+            efficiency=Decimal("15.00"),
+            area_m2=Decimal("1.000"),
             quantity=1,
         )
         snapshot = make_weather_snapshot(
             self.region,
             date=datetime.date(2024, 6, 2),
-            irradiation=Decimal('4.000'),
+            irradiation=Decimal("4.000"),
         )
         estimate = self.service.estimate(
             user=self.user,
@@ -369,16 +394,16 @@ class EstimationServiceTest(TestCase):
             solar_module=module,
             weather_snapshot=snapshot,
         )
-        self.assertEqual(estimate.daily_kwh, Decimal('0.320'))
+        self.assertEqual(estimate.daily_kwh, Decimal("0.320"))
 
     def test_validacao_potencia_invalida(self):
         module = SolarModule.objects.create(
             user=self.user,
-            model='Test',
-            manufacturer='Test',
-            power_wp=Decimal('0.00'),
-            efficiency=Decimal('15.00'),
-            area_m2=Decimal('1.000'),
+            model="Test",
+            manufacturer="Test",
+            power_wp=Decimal("0.00"),
+            efficiency=Decimal("15.00"),
+            area_m2=Decimal("1.000"),
             quantity=1,
         )
         with self.assertRaises(EstimationServiceError):
@@ -392,11 +417,11 @@ class EstimationServiceTest(TestCase):
     def test_validacao_quantidade_invalida(self):
         module = SolarModule.objects.create(
             user=self.user,
-            model='Test',
-            manufacturer='Test',
-            power_wp=Decimal('540.00'),
-            efficiency=Decimal('20.90'),
-            area_m2=Decimal('2.583'),
+            model="Test",
+            manufacturer="Test",
+            power_wp=Decimal("540.00"),
+            efficiency=Decimal("20.90"),
+            area_m2=Decimal("2.583"),
             quantity=0,
         )
         with self.assertRaises(EstimationServiceError):
@@ -410,11 +435,11 @@ class EstimationServiceTest(TestCase):
     def test_validacao_eficiencia_invalida(self):
         module = SolarModule.objects.create(
             user=self.user,
-            model='Test',
-            manufacturer='Test',
-            power_wp=Decimal('540.00'),
-            efficiency=Decimal('0.00'),
-            area_m2=Decimal('2.583'),
+            model="Test",
+            manufacturer="Test",
+            power_wp=Decimal("540.00"),
+            efficiency=Decimal("0.00"),
+            area_m2=Decimal("2.583"),
             quantity=4,
         )
         with self.assertRaises(EstimationServiceError):
@@ -428,11 +453,11 @@ class EstimationServiceTest(TestCase):
     def test_validacao_eficiencia_acima_de_100(self):
         module = SolarModule.objects.create(
             user=self.user,
-            model='Test',
-            manufacturer='Test',
-            power_wp=Decimal('540.00'),
-            efficiency=Decimal('150.00'),
-            area_m2=Decimal('2.583'),
+            model="Test",
+            manufacturer="Test",
+            power_wp=Decimal("540.00"),
+            efficiency=Decimal("150.00"),
+            area_m2=Decimal("2.583"),
             quantity=4,
         )
         with self.assertRaises(EstimationServiceError):
@@ -447,7 +472,7 @@ class EstimationServiceTest(TestCase):
         snapshot = make_weather_snapshot(
             self.region,
             date=datetime.date(2024, 6, 5),
-            irradiation=Decimal('0.000'),
+            irradiation=Decimal("0.000"),
         )
         with self.assertRaises(EstimationServiceError):
             self.service.estimate(
@@ -462,93 +487,192 @@ class EstimationServiceTest(TestCase):
 # Estimate API
 # ---------------------------------------------------------------------------
 
+
 class EstimateAPITest(APITestCase):
     def setUp(self):
-        self.user = make_user(username='owner')
-        self.other_user = make_user(username='other')
+        self.user = make_user(username="owner")
+        self.other_user = make_user(username="other")
         self.region = make_region()
         self.module = SolarModule.objects.create(
             user=self.user,
-            model='RS-540M10',
-            manufacturer='Canadian Solar',
-            power_wp=Decimal('540.00'),
-            efficiency=Decimal('20.90'),
-            area_m2=Decimal('2.583'),
+            model="RS-540M10",
+            manufacturer="Canadian Solar",
+            power_wp=Decimal("540.00"),
+            efficiency=Decimal("20.90"),
+            area_m2=Decimal("2.583"),
             quantity=4,
         )
         self.other_module = SolarModule.objects.create(
             user=self.other_user,
-            model='Other',
-            manufacturer='Other',
-            power_wp=Decimal('100.00'),
-            efficiency=Decimal('15.00'),
-            area_m2=Decimal('1.000'),
+            model="Other",
+            manufacturer="Other",
+            power_wp=Decimal("100.00"),
+            efficiency=Decimal("15.00"),
+            area_m2=Decimal("1.000"),
             quantity=1,
         )
         self.snapshot = make_weather_snapshot(
             self.region,
             date=timezone.localdate(),
-            irradiation=Decimal('5.350'),
+            irradiation=Decimal("5.350"),
         )
 
     def _auth(self):
         self.client.force_authenticate(user=self.user)
 
-    @patch('apps.estimates.services.request.urlopen')
+    @patch("apps.estimates.services.request.urlopen")
     def test_usuario_autenticado_cria_estimativa(self, urlopen_mock):
         urlopen_mock.return_value = FakeWeatherResponse(make_open_meteo_payload())
         self._auth()
-        response = self.client.post(reverse('estimate'), {
-            'region_id': self.region.id,
-            'module_id': self.module.id,
-        })
+        response = self.client.post(
+            reverse("estimate"),
+            {
+                "region_id": self.region.id,
+                "module_id": self.module.id,
+            },
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertIn('id', response.data)
-        self.assertEqual(response.data['daily_kwh'], '9.240')
-        self.assertEqual(response.data['monthly_kwh'], '277.200')
-        self.assertEqual(response.data['annual_kwh'], '3372.600')
-        self.assertEqual(response.data['efficiency_index'], '20.9000')
+        self.assertIn("id", response.data)
+        self.assertEqual(response.data["daily_kwh"], "9.240")
+        self.assertEqual(response.data["monthly_kwh"], "277.200")
+        self.assertEqual(response.data["annual_kwh"], "3372.600")
+        self.assertEqual(response.data["efficiency_index"], "20.9000")
 
     def test_usuario_nao_autenticado_recebe_401(self):
-        response = self.client.post(reverse('estimate'), {
-            'region_id': self.region.id,
-            'module_id': self.module.id,
-        })
+        response = self.client.post(
+            reverse("estimate"),
+            {
+                "region_id": self.region.id,
+                "module_id": self.module.id,
+            },
+        )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_modulo_de_outro_usuario_retorna_404(self):
         self._auth()
-        response = self.client.post(reverse('estimate'), {
-            'region_id': self.region.id,
-            'module_id': self.other_module.id,
-        })
+        response = self.client.post(
+            reverse("estimate"),
+            {
+                "region_id": self.region.id,
+                "module_id": self.other_module.id,
+            },
+        )
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data['detail'], 'Modulo nao encontrado.')
+        self.assertEqual(response.data["detail"], "Modulo nao encontrado.")
 
     def test_regiao_inexistente_retorna_404(self):
         self._auth()
-        response = self.client.post(reverse('estimate'), {
-            'region_id': 99999,
-            'module_id': self.module.id,
-        })
+        response = self.client.post(
+            reverse("estimate"),
+            {
+                "region_id": 99999,
+                "module_id": self.module.id,
+            },
+        )
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data['detail'], 'Regiao nao encontrada.')
+        self.assertEqual(response.data["detail"], "Regiao nao encontrada.")
 
-    @patch('apps.estimates.services.request.urlopen')
+    @patch("apps.estimates.services.request.urlopen")
     def test_estimate_salvo_no_banco(self, urlopen_mock):
         urlopen_mock.return_value = FakeWeatherResponse(make_open_meteo_payload())
         self._auth()
-        response = self.client.post(reverse('estimate'), {
-            'region_id': self.region.id,
-            'module_id': self.module.id,
-        })
+        response = self.client.post(
+            reverse("estimate"),
+            {
+                "region_id": self.region.id,
+                "module_id": self.module.id,
+            },
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        estimate = EnergyEstimate.objects.get(pk=response.data['id'])
+        estimate = EnergyEstimate.objects.get(pk=response.data["id"])
         self.assertEqual(estimate.user, self.user)
         self.assertEqual(estimate.region, self.region)
         self.assertEqual(estimate.module, self.module)
         self.assertIsNotNone(estimate.weather_snapshot)
-        self.assertEqual(estimate.daily_kwh, Decimal('9.240'))
-        self.assertEqual(estimate.monthly_kwh, Decimal('277.200'))
-        self.assertEqual(estimate.yearly_kwh, Decimal('3372.600'))
-        self.assertEqual(estimate.efficiency_index, Decimal('20.90'))
+        self.assertEqual(estimate.daily_kwh, Decimal("9.240"))
+        self.assertEqual(estimate.monthly_kwh, Decimal("277.200"))
+        self.assertEqual(estimate.yearly_kwh, Decimal("3372.600"))
+        self.assertEqual(estimate.efficiency_index, Decimal("20.90"))
+
+
+# Region comparison API
+# ---------------------------------------------------------------------------
+
+
+class RegionComparisonApiTest(APITestCase):
+    def setUp(self):
+        self.user = make_user()
+        self.region_a = make_region(name="Natal")
+        self.region_b = make_region(name="Mossoro")
+
+        make_energy_estimate(
+            self.user,
+            self.region_a,
+            daily_kwh=Decimal("10.000"),
+            monthly_kwh=Decimal("300.000"),
+            yearly_kwh=Decimal("3600.000"),
+            efficiency_index=Decimal("0.8000"),
+        )
+        make_energy_estimate(
+            self.user,
+            self.region_a,
+            daily_kwh=Decimal("12.000"),
+            monthly_kwh=Decimal("360.000"),
+            yearly_kwh=Decimal("4320.000"),
+            efficiency_index=Decimal("0.8400"),
+        )
+        make_energy_estimate(
+            self.user,
+            self.region_b,
+            daily_kwh=Decimal("8.000"),
+            monthly_kwh=Decimal("240.000"),
+            yearly_kwh=Decimal("2880.000"),
+            efficiency_index=Decimal("0.7600"),
+        )
+
+    def test_compare_regions_returns_chart_ready_series(self):
+        response = self.client.post(
+            reverse("region-comparison"),
+            {"region_ids": [self.region_a.id, self.region_b.id]},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data["region_ids"],
+            [self.region_a.id, self.region_b.id],
+        )
+        self.assertEqual(response.data["chart"]["labels"], ["Natal", "Mossoro"])
+        self.assertEqual(response.data["series"][0]["daily_kwh"], "11.000")
+        self.assertEqual(response.data["series"][0]["monthly_kwh"], "330.000")
+        self.assertEqual(response.data["series"][0]["yearly_kwh"], "3960.000")
+        self.assertEqual(response.data["series"][0]["efficiency_index"], "0.8200")
+        self.assertEqual(response.data["series"][0]["estimates_count"], 2)
+        self.assertEqual(
+            response.data["chart"]["datasets"][0]["data"],
+            [11.0, 8.0],
+        )
+
+    def test_compare_regions_requires_at_least_two_distinct_regions(self):
+        response = self.client.post(
+            reverse("region-comparison"),
+            {"region_ids": [self.region_a.id]},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("region_ids", response.data)
+
+    def test_compare_regions_returns_clear_error_for_invalid_region(self):
+        response = self.client.post(
+            reverse("region-comparison"),
+            {"region_ids": [self.region_a.id, 999999]},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"],
+            "Uma ou mais regioes informadas nao existem.",
+        )
+        self.assertEqual(response.data["invalid_region_ids"], [999999])

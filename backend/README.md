@@ -160,6 +160,7 @@ A API estará disponível em `http://localhost:8000`.
 | `DELETE` | `/api/modules/{id}/` | Excluir módulo solar |
 | `GET` | `/api/weather/?region_id={id}` | Consultar clima por coordenada da região e salvar snapshot |
 | `POST` | `/api/estimates/` | Estimar produção energética (exige Bearer token). Payload: `{"region_id": 1, "module_id": 3}` |
+| `POST` | `/api/estimates/compare/` | Comparar estimativas médias de duas ou mais regiões. Payload: `{"region_ids": [1, 2]}` |
 | — | `/admin/` | Django Admin |
 
 ---
