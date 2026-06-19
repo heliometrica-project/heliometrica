@@ -2,6 +2,8 @@
 
 import django.db.models.deletion
 from django.conf import settings
+
+# ruff: noqa: E501
 from django.db import migrations, models
 
 

@@ -321,3 +321,96 @@ class GenerationHistoryAPITest(TestCase):
         self.assertEqual(str(data['daily_kwh']), '8.640')
         self.assertEqual(str(data['monthly_kwh']), '259.200')
         self.assertEqual(str(data['yearly_kwh']), '3110.400')
+
+
+# ---------------------------------------------------------------------------
+# API — CSV Export endpoint
+# ---------------------------------------------------------------------------
+
+class CSVExportAPITest(TestCase):
+    """Testes do endpoint de exportação CSV."""
+
+    def setUp(self):
+        self.user = make_user()
+        self.other_user = make_user(username="other")
+        self.region = make_region()
+        self.estimate = make_energy_estimate(self.user, self.region)
+        self.other_estimate = make_energy_estimate(self.other_user, self.region)
+
+    def _auth(self, user=None):
+        from rest_framework_simplejwt.tokens import AccessToken
+        token = AccessToken.for_user(user or self.user)
+        return {'HTTP_AUTHORIZATION': f'Bearer {token}'}
+
+    def test_export_csv_retorna_200(self):
+        history = make_generation_history(self.user, self.estimate, title="Export Test")
+        response = self.client.get(
+            f'/api/history/{history.pk}/export/', **self._auth()
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_export_csv_content_type(self):
+        history = make_generation_history(self.user, self.estimate)
+        response = self.client.get(
+            f'/api/history/{history.pk}/export/', **self._auth()
+        )
+        self.assertEqual(response['Content-Type'], 'text/csv')
+
+    def test_export_csv_content_disposition(self):
+        history = make_generation_history(self.user, self.estimate)
+        response = self.client.get(
+            f'/api/history/{history.pk}/export/', **self._auth()
+        )
+        self.assertIn('attachment; filename="', response['Content-Disposition'])
+        self.assertIn('.csv"', response['Content-Disposition'])
+
+    def test_export_csv_contem_cabecalho(self):
+        history = make_generation_history(
+            self.user, self.estimate, title="Cabecalho Test"
+        )
+        response = self.client.get(
+            f'/api/history/{history.pk}/export/', **self._auth()
+        )
+        content = response.content.decode()
+        self.assertIn('Título', content)
+        self.assertIn('Região', content)
+        self.assertIn('Diário (kWh)', content)
+        self.assertIn('Mensal (kWh)', content)
+        self.assertIn('Anual (kWh)', content)
+
+    def test_export_csv_contem_dados_da_estimativa(self):
+        history = make_generation_history(self.user, self.estimate, title="Dados Test")
+        response = self.client.get(
+            f'/api/history/{history.pk}/export/', **self._auth()
+        )
+        content = response.content.decode()
+        self.assertIn('Dados Test', content)
+        self.assertIn(self.region.name, content)
+        self.assertIn(str(self.estimate.daily_kwh), content)
+
+    def test_export_csv_sem_autenticacao_rejeita(self):
+        history = make_generation_history(self.user, self.estimate)
+        response = self.client.get(f'/api/history/{history.pk}/export/')
+        self.assertEqual(response.status_code, 401)
+
+    def test_export_csv_de_outro_usuario_rejeita(self):
+        history = make_generation_history(
+            self.other_user, self.other_estimate, title="Outro"
+        )
+        response = self.client.get(
+            f'/api/history/{history.pk}/export/', **self._auth()
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_export_csv_cria_report_export(self):
+        history = make_generation_history(
+            self.user, self.estimate, title="Registro Test"
+        )
+        self.client.get(f'/api/history/{history.pk}/export/', **self._auth())
+        self.assertTrue(
+            ReportExport.objects.filter(
+                user=self.user,
+                estimate=self.estimate,
+                format=ReportExport.FORMAT_CSV,
+            ).exists()
+        )
