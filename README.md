@@ -8,7 +8,7 @@ O Heliométrica é uma plataforma web para monitoramento e análise de desempenh
 
 - **Dashboard** com visão geral de regiões e geração de energia
 - **Estimativas de produção** baseadas em dados meteorológicos e geolocalização
-- **Histórico de medições** e comparação com estimativas
+- **Histórico de medições** com CRUD de geração energética, dados de módulo e região para relatórios
 - **Cadastro de módulos solares** (painéis) com especificações técnicas (modelo, fabricante, potência, eficiência, área, quantidade) — via admin; API prevista
 - **Consulta de regiões** (municípios georreferenciados) — somente leitura via API, seed inicial via comando
 - **API REST** para integração futura com sensores e inversores
@@ -31,7 +31,7 @@ heliometrica/
 │   │   ├── core/         # Region (read-only API), SolarModule (model+admin)
 │   │   ├── accounts/     # Autenticação/usuários
 │   │   ├── estimates/    # EnergyEstimate, WeatherSnapshot
-│   │   ├── reporting/    # Relatórios (previsto)
+│   │   ├── reporting/    # GenerationHistory, ReportExport (CRUD + exportação)
 │   │   └── health/       # Health check
 │   └── config/       # Settings, URLs, WSGI
 ├── frontend/         # React + Vite
@@ -169,6 +169,8 @@ npm run lint:fix
 | Testes (previsto) | `docs/testes/` | Estratégia, planos, evidências |
 | Regiões (seed) | `backend/apps/core/management/commands/seed_regions.py` | Municípios RN/CE (Alto Oeste Potiguar) |
 | Módulos Solares (model) | `backend/apps/core/models.py:66` | SolarModule — cadastro de painéis (admin); API prevista |
+| Histórico de Geração (model) | `backend/apps/reporting/models.py:17` | GenerationHistory — registro nomeado de estimativas |
+| Exportação de Relatórios (model) | `backend/apps/reporting/models.py:65` | ReportExport — metadados de exportações CSV/PDF |
 
 ## Convenções de Commit
 

@@ -161,6 +161,12 @@ A API estará disponível em `http://localhost:8000`.
 | `GET` | `/api/weather/?region_id={id}` | Consultar clima por coordenada da região e salvar snapshot |
 | `POST` | `/api/estimates/` | Estimar produção energética (exige Bearer token). Payload: `{"region_id": 1, "module_id": 3}` |
 | `POST` | `/api/estimates/compare/` | Comparar estimativas médias de duas ou mais regiões. Payload: `{"region_ids": [1, 2]}` |
+| `GET` | `/api/history/` | Listar histórico de geração do usuário autenticado |
+| `POST` | `/api/history/` | Criar registro no histórico. Payload: `{"title": "...", "estimate": 1, "notes": "..."}` |
+| `GET` | `/api/history/{id}/` | Detalhe de um registro do histórico |
+| `PUT` | `/api/history/{id}/` | Atualizar registro do histórico (todos os campos) |
+| `PATCH` | `/api/history/{id}/` | Atualizar registro do histórico (parcial) |
+| `DELETE` | `/api/history/{id}/` | Excluir registro do histórico |
 | — | `/admin/` | Django Admin |
 
 ---
@@ -354,10 +360,10 @@ A suite de testes cobre os 5 apps do backend:
 |---|---|---|
 | `core` | `RegionModelTest`, `SolarModuleModelTest`, `RegionAPITest`, `SolarModuleAPITest` | 33 |
 | `estimates` | `WeatherSnapshotModelTest`, `EnergyEstimateModelTest`, `EstimationServiceTest`, `EstimateAPITest` | 33 |
-| `reporting` | `GenerationHistoryModelTest`, `ReportExportModelTest` | 15 |
+| `reporting` | `GenerationHistoryModelTest`, `GenerationHistoryAPITest`, `ReportExportModelTest` | 27 |
 | `health` | `HealthCheckTest` | 1 |
 | `accounts` | `AuthApiTest` | 3 |
-| **Total** | 13 | **94** |
+| **Total** | 14 | **107** |
 
 Cenários cobertos: criação de instâncias, valores padrão, `__str__`, constraints (`unique_together`), campos nullable, comportamento de FKs (`CASCADE`, `SET_NULL`), timestamps automáticos, CRUD via API REST, busca textual, health check, e isolamento de dados entre usuários.
 
