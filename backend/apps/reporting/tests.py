@@ -9,13 +9,12 @@ Cobertura:
     - auto_now: updated_at em GenerationHistory é atualizado ao salvar
 """
 
-import datetime
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from apps.core.models import Region, SolarModule
+from apps.core.models import Region
 from apps.estimates.models import EnergyEstimate
 from apps.reporting.models import GenerationHistory, ReportExport
 
@@ -89,7 +88,9 @@ class GenerationHistoryModelTest(TestCase):
     def test_notes_aceita_texto_longo(self):
         """O campo notes (TextField) deve aceitar texto longo."""
         texto = "Observação importante. " * 100
-        history = make_generation_history(self.user, self.estimate, title="Com notas", notes=texto)
+        history = make_generation_history(
+            self.user, self.estimate, title="Com notas", notes=texto
+        )
         self.assertEqual(history.notes, texto)
 
     def test_str_inclui_titulo_e_usuario(self):
@@ -186,7 +187,7 @@ class ReportExportModelTest(TestCase):
         self.assertIsNotNone(self.report.generated_at)
 
     def test_cascade_ao_deletar_estimativa(self):
-        """Excluir a EnergyEstimate deve excluir os ReportExports vinculados (CASCADE)."""
+        """Excluir a EnergyEstimate exclui ReportExports vinculados (CASCADE)."""
         report_id = self.report.pk
         self.estimate.delete()
         self.assertFalse(ReportExport.objects.filter(pk=report_id).exists())
@@ -196,3 +197,127 @@ class ReportExportModelTest(TestCase):
         report_id = self.report.pk
         self.user.delete()
         self.assertFalse(ReportExport.objects.filter(pk=report_id).exists())
+
+
+# ---------------------------------------------------------------------------
+# API — GenerationHistory endpoints
+# ---------------------------------------------------------------------------
+
+class GenerationHistoryAPITest(TestCase):
+    """Testes dos endpoints de CRUD de GenerationHistory."""
+
+    def setUp(self):
+        self.user = make_user()
+        self.other_user = make_user(username="other")
+        self.region = make_region()
+        self.estimate = make_energy_estimate(self.user, self.region)
+        self.other_estimate = make_energy_estimate(self.other_user, self.region)
+
+    def _auth(self, user=None):
+        from rest_framework_simplejwt.tokens import AccessToken
+        token = AccessToken.for_user(user or self.user)
+        return {'HTTP_AUTHORIZATION': f'Bearer {token}'}
+
+    def test_list_historico_retorna_apens_do_usuario(self):
+        make_generation_history(self.user, self.estimate, title="Meu historico")
+        make_generation_history(
+            self.other_user, self.other_estimate, title="Outro historico"
+        )
+        response = self.client.get('/api/history/', **self._auth())
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['title'], "Meu historico")
+
+    def test_criar_historico_com_estimativa_valida(self):
+        payload = {
+            'title': 'Minha simulacao',
+            'estimate': self.estimate.pk,
+            'notes': 'Observacao',
+        }
+        response = self.client.post(
+            '/api/history/', payload, **self._auth(), content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 201)
+        data = response.json()
+        self.assertEqual(data['title'], 'Minha simulacao')
+        self.assertEqual(data['notes'], 'Observacao')
+        self.assertEqual(data['estimate'], self.estimate.pk)
+
+    def test_criar_historico_com_estimativa_de_outro_usuario_rejeita(self):
+        payload = {
+            'title': 'Tentativa invasao',
+            'estimate': self.other_estimate.pk,
+        }
+        response = self.client.post(
+            '/api/history/', payload, **self._auth(), content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_criar_historico_sem_autenticacao_rejeita(self):
+        payload = {
+            'title': 'Sem auth',
+            'estimate': self.estimate.pk,
+        }
+        response = self.client.post(
+            '/api/history/', payload, content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_detalhar_historico(self):
+        history = make_generation_history(self.user, self.estimate)
+        response = self.client.get(f'/api/history/{history.pk}/', **self._auth())
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['title'], history.title)
+
+    def test_detalhar_historico_de_outro_usuario_rejeita(self):
+        history = make_generation_history(self.other_user, self.other_estimate)
+        response = self.client.get(f'/api/history/{history.pk}/', **self._auth())
+        self.assertEqual(response.status_code, 404)
+
+    def test_atualizar_historico_parcial_patch(self):
+        history = make_generation_history(self.user, self.estimate, title="Original")
+        response = self.client.patch(
+            f'/api/history/{history.pk}/',
+            {'title': 'Atualizado'},
+            **self._auth(),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['title'], 'Atualizado')
+
+    def test_atualizar_historico_total_put(self):
+        history = make_generation_history(self.user, self.estimate, title="Original")
+        response = self.client.put(
+            f'/api/history/{history.pk}/',
+            {'title': 'Total', 'estimate': self.estimate.pk, 'notes': ''},
+            **self._auth(),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['title'], 'Total')
+
+    def test_deletar_historico(self):
+        history = make_generation_history(self.user, self.estimate)
+        response = self.client.delete(f'/api/history/{history.pk}/', **self._auth())
+        self.assertEqual(response.status_code, 204)
+        self.assertFalse(GenerationHistory.objects.filter(pk=history.pk).exists())
+
+    def test_deletar_historico_de_outro_usuario_rejeita(self):
+        history = make_generation_history(self.other_user, self.other_estimate)
+        response = self.client.delete(f'/api/history/{history.pk}/', **self._auth())
+        self.assertEqual(response.status_code, 404)
+
+    def test_historico_inclui_dados_da_estimativa(self):
+        history = make_generation_history(self.user, self.estimate, title="Relatorio")
+        response = self.client.get(f'/api/history/{history.pk}/', **self._auth())
+        data = response.json()
+        self.assertIn('region_name', data)
+        self.assertIn('daily_kwh', data)
+        self.assertIn('monthly_kwh', data)
+        self.assertIn('yearly_kwh', data)
+        self.assertIn('efficiency_index', data)
+        self.assertEqual(data['region_name'], self.region.name)
+        self.assertEqual(str(data['daily_kwh']), '8.640')
+        self.assertEqual(str(data['monthly_kwh']), '259.200')
+        self.assertEqual(str(data['yearly_kwh']), '3110.400')
