@@ -6,6 +6,7 @@ export function RootLayout() {
   const location = useLocation()
   const { user, logout } = useAuth()
   const isDashboard = location.pathname === '/dashboard'
+  const isModules = location.pathname.startsWith('/modules')
   const isAuth = location.pathname === '/login' || location.pathname === '/register'
 
   return (
@@ -28,6 +29,12 @@ export function RootLayout() {
               className={`root-header__link ${isDashboard ? 'root-header__link--active' : ''}`}
             >
               Dashboard
+            </Link>
+            <Link
+              to="/modules"
+              className={`root-header__link ${isModules ? 'root-header__link--active' : ''}`}
+            >
+              Módulos
             </Link>
             {user ? (
               <>
