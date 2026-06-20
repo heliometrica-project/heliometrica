@@ -161,6 +161,7 @@ npm run lint:fix
 
 | Documento | Localização | Descrição |
 |-----------|-------------|-----------|
+| **API Reference** | `docs/api.md` | **Documentação completa da REST API** (endpoints, payloads, respostas, erros, autenticação, exemplos cURL/Postman) |
 | Requisitos do Sistema | `docs/requisitos/requisitos-do-sistema.pdf` | Especificação funcional e não-funcional |
 | Protótipo Baixa Fidelidade | `docs/modelagem/prototipo-baixa-fidelidade.pdf` | Wireframes e fluxos de tela |
 | Diagramas UML (Unidade 01) | `docs/modelagem/unidade01/` | Casos de uso, modelo de classes análise |
