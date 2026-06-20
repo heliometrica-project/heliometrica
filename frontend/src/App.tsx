@@ -8,6 +8,7 @@ import { Register } from './pages/Register'
 import { Dashboard } from './pages/Dashboard'
 import { SolarModulesList } from './pages/SolarModulesList'
 import { SolarModulesForm } from './pages/SolarModulesForm'
+import { ComparePage } from './pages/ComparePage'
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
               <Route path="/modules" element={<SolarModulesList />} />
               <Route path="/modules/new" element={<SolarModulesForm />} />
               <Route path="/modules/:id/edit" element={<SolarModulesForm />} />
+              <Route path="/compare" element={<ComparePage />} />
             </Route>
           </Route>
         </Routes>
