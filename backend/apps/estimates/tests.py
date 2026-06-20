@@ -594,6 +594,49 @@ class EstimateAPITest(APITestCase):
         self.assertEqual(estimate.yearly_kwh, Decimal("3372.600"))
         self.assertEqual(estimate.efficiency_index, Decimal("20.90"))
 
+    @patch("apps.estimates.services.request.urlopen")
+    def test_usuario_autenticado_cria_estimativa_por_coordenada(self, urlopen_mock):
+        urlopen_mock.return_value = FakeWeatherResponse(make_open_meteo_payload())
+        self._auth()
+
+        response = self.client.post(
+            reverse("custom-estimate"),
+            {
+                "module_id": self.module.id,
+                "name": "Ponto no mapa",
+                "state": "RN",
+                "latitude": "-5.123456",
+                "longitude": "-37.654321",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        estimate = EnergyEstimate.objects.get(pk=response.data["id"])
+        self.assertEqual(estimate.user, self.user)
+        self.assertEqual(estimate.module, self.module)
+        self.assertEqual(estimate.region.source, "user")
+        self.assertEqual(estimate.region.name, "Ponto no mapa")
+        self.assertEqual(estimate.region.state, "RN")
+        self.assertEqual(estimate.region.latitude, Decimal("-5.123456"))
+        self.assertEqual(estimate.region.longitude, Decimal("-37.654321"))
+        self.assertEqual(estimate.weather_snapshot.irradiation, Decimal("5.700"))
+        self.assertEqual(response.data["daily_kwh"], "9.850")
+
+    def test_estimativa_por_coordenada_exige_autenticacao(self):
+        response = self.client.post(
+            reverse("custom-estimate"),
+            {
+                "module_id": self.module.id,
+                "name": "Ponto no mapa",
+                "latitude": "-5.123456",
+                "longitude": "-37.654321",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
 
 # Region comparison API
 # ---------------------------------------------------------------------------
