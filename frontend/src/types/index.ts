@@ -2,6 +2,14 @@ export type { Region } from './region'
 export type { SelectedLocation } from './location'
 export type { SolarModule, SolarModuleFormData } from './solarModule'
 export type {
+  CustomEstimatePayload,
+  EstimatePayload,
+  EstimateResult,
+  HistoryPayload,
+  HistoryRecord,
+  WeatherSnapshot,
+} from './estimate'
+export type {
   RegionSeries,
   ChartDataset,
   CompareChartData,

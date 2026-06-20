@@ -87,6 +87,14 @@ class EstimateInputSerializer(serializers.Serializer):
     module_id = serializers.IntegerField()
 
 
+class CustomEstimateInputSerializer(serializers.Serializer):
+    module_id = serializers.IntegerField()
+    name = serializers.CharField(max_length=200, default="Ponto selecionado")
+    state = serializers.CharField(max_length=100, default="", allow_blank=True)
+    latitude = serializers.DecimalField(max_digits=9, decimal_places=6)
+    longitude = serializers.DecimalField(max_digits=9, decimal_places=6)
+
+
 class EstimateOutputSerializer(serializers.ModelSerializer):
     annual_kwh = serializers.DecimalField(
         source="yearly_kwh",

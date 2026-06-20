@@ -7,6 +7,7 @@ export function RootLayout() {
   const { user, logout } = useAuth()
   const isDashboard = location.pathname === '/dashboard'
   const isModules = location.pathname.startsWith('/modules')
+  const isEstimate = location.pathname === '/estimate'
   const isCompare = location.pathname === '/compare'
   const isAuth = location.pathname === '/login' || location.pathname === '/register'
 
@@ -36,6 +37,12 @@ export function RootLayout() {
               className={`root-header__link ${isModules ? 'root-header__link--active' : ''}`}
             >
               Módulos
+            </Link>
+            <Link
+              to="/estimate"
+              className={`root-header__link ${isEstimate ? 'root-header__link--active' : ''}`}
+            >
+              Estimar
             </Link>
             <Link
               to="/compare"
