@@ -22,7 +22,7 @@ class RegionComparisonRequestSerializer(serializers.Serializer):
 class CustomLocationItemSerializer(serializers.Serializer):
     id = serializers.IntegerField(min_value=1)
     name = serializers.CharField(max_length=200)
-    state = serializers.CharField(max_length=2, default="", allow_blank=True)
+    state = serializers.CharField(max_length=100, default="", allow_blank=True)
     latitude = serializers.DecimalField(max_digits=9, decimal_places=6)
     longitude = serializers.DecimalField(max_digits=9, decimal_places=6)
 
