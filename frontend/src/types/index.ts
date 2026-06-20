@@ -1,4 +1,12 @@
 export type { Region } from './region'
 export type { SelectedLocation } from './location'
 export type { SolarModule, SolarModuleFormData } from './solarModule'
-export type { RegionSeries, ChartDataset, CompareChartData, CompareResponse } from './compare'
+export type {
+  RegionSeries,
+  ChartDataset,
+  CompareChartData,
+  CompareResponse,
+  CustomLocation,
+  CustomLocationSeries,
+  CustomCompareResponse,
+} from './compare'
