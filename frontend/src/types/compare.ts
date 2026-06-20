@@ -26,3 +26,29 @@ export interface CompareResponse {
   series: RegionSeries[]
   chart: CompareChartData
 }
+
+export interface CustomLocation {
+  id: number
+  name: string
+  state: string
+  latitude: number
+  longitude: number
+}
+
+export interface CustomLocationSeries {
+  location_id: number
+  location_name: string
+  location_state: string
+  daily_kwh: string
+  monthly_kwh: string
+  yearly_kwh: string
+  irradiation: string
+  temperature: string
+}
+
+export interface CustomCompareResponse {
+  metric: string
+  locations: { id: number; name: string; state: string }[]
+  series: CustomLocationSeries[]
+  chart: CompareChartData
+}

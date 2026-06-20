@@ -4,12 +4,14 @@ from rest_framework.views import APIView
 
 from apps.core.models import Region, SolarModule
 from apps.estimates.serializers import (
+    CustomComparisonRequestSerializer,
     EstimateInputSerializer,
     EstimateOutputSerializer,
     RegionComparisonRequestSerializer,
     WeatherSnapshotSerializer,
 )
 from apps.estimates.services import (
+    CustomComparisonService,
     EstimationService,
     EstimationServiceError,
     RegionComparisonService,
@@ -151,6 +153,40 @@ class RegionComparisonView(APIView):
             {
                 "metric": "average_energy_estimates",
                 "region_ids": region_ids,
+                **comparison,
+            }
+        )
+
+
+class CustomComparisonView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = CustomComparisonRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        locations = serializer.validated_data["locations"]
+
+        try:
+            comparison = CustomComparisonService().compare(locations)
+        except WeatherServiceError:
+            return Response(
+                {
+                    "detail": (
+                        "Falha ao consultar dados meteorologicos para "
+                        "uma ou mais localizacoes."
+                    )
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        return Response(
+            {
+                "metric": "realtime_weather_estimate",
+                "locations": [
+                    {"id": loc["id"], "name": loc["name"], "state": loc.get("state", "")}
+                    for loc in locations
+                ],
                 **comparison,
             }
         )

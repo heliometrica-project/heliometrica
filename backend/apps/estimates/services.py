@@ -40,6 +40,18 @@ class RegionEstimateSummary:
     efficiency_index: Decimal | None
 
 
+@dataclass(frozen=True)
+class CustomLocationSummary:
+    location_id: int
+    location_name: str
+    location_state: str
+    daily_kwh: Decimal
+    monthly_kwh: Decimal
+    yearly_kwh: Decimal
+    irradiation: Decimal
+    temperature: Decimal
+
+
 class RegionComparisonService:
     def __init__(self, estimation_service=None):
         self.estimation_service = estimation_service or EstimationService()
@@ -103,6 +115,80 @@ class RegionComparisonService:
         if value is None:
             return None
         return float(value)
+
+
+class CustomComparisonService:
+    DEFAULT_POWER_WP = Decimal("540")
+    DEFAULT_EFFICIENCY = Decimal("21.0")
+    DEFAULT_QUANTITY = 1
+    PR = Decimal("0.80")
+
+    def __init__(self, weather_service=None):
+        self.weather_service = weather_service or WeatherService()
+
+    def compare(self, locations):
+        summaries = [self._summarize(loc) for loc in locations]
+
+        return {
+            "series": [self._summary_to_dict(s) for s in summaries],
+            "chart": {
+                "labels": [s.location_name for s in summaries],
+                "datasets": [
+                    {
+                        "key": "daily_kwh",
+                        "label": "Geracao diaria (kWh)",
+                        "data": [float(s.daily_kwh) for s in summaries],
+                    },
+                    {
+                        "key": "monthly_kwh",
+                        "label": "Geracao mensal (kWh)",
+                        "data": [float(s.monthly_kwh) for s in summaries],
+                    },
+                    {
+                        "key": "yearly_kwh",
+                        "label": "Geracao anual (kWh)",
+                        "data": [float(s.yearly_kwh) for s in summaries],
+                    },
+                ],
+            },
+        }
+
+    def _summarize(self, location):
+        weather = self.weather_service.fetch_by_coordinates(
+            latitude=location["latitude"],
+            longitude=location["longitude"],
+        )
+
+        irradiation = weather.irradiation
+        installed_kw = (self.DEFAULT_POWER_WP * self.DEFAULT_QUANTITY) / Decimal("1000")
+        daily = (installed_kw * irradiation * self.PR).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+        monthly = (daily * 30).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
+        yearly = (daily * 365).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
+
+        return CustomLocationSummary(
+            location_id=location["id"],
+            location_name=location["name"],
+            location_state=location.get("state", ""),
+            daily_kwh=daily,
+            monthly_kwh=monthly,
+            yearly_kwh=yearly,
+            irradiation=irradiation,
+            temperature=weather.temperature,
+        )
+
+    def _summary_to_dict(self, summary):
+        return {
+            "location_id": summary.location_id,
+            "location_name": summary.location_name,
+            "location_state": summary.location_state,
+            "daily_kwh": str(summary.daily_kwh),
+            "monthly_kwh": str(summary.monthly_kwh),
+            "yearly_kwh": str(summary.yearly_kwh),
+            "irradiation": str(summary.irradiation),
+            "temperature": str(summary.temperature),
+        }
 
 
 class WeatherService:
