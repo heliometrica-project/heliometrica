@@ -1,0 +1,62 @@
+.compare-chart {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.compare-chart__title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 1.25rem;
+  letter-spacing: -0.01em;
+}
+
+.compare-chart__table-wrapper {
+  margin-top: 1.5rem;
+  overflow-x: auto;
+}
+
+.compare-chart__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.compare-chart__table th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.compare-chart__table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.compare-chart__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.compare-chart__region {
+  font-weight: 500;
+}
+
+.compare-chart__region-state {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg);
+  padding: 0.0625rem 0.4375rem;
+  border-radius: 999px;
+  margin-left: 0.375rem;
+  font-weight: 400;
+}
