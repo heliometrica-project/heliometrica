@@ -4,6 +4,8 @@ export interface EnergyEstimate {
   monthly_kwh: number | string
   annual_kwh: number | string
   efficiency_index: number | string
+}
+
 export interface WeatherSnapshot {
   id: number
   region: number
