@@ -19,8 +19,8 @@ O Heliométrica é uma plataforma web para monitoramento e análise de desempenh
 |--------|------------|
 | Backend | Django 4.2 + Django REST Framework |
 | Frontend | React 18 + TypeScript + Vite |
-| Banco de Dados | SQLite (dev) / PostgreSQL (produção prevista) |
-| Deploy | Docker + Docker Compose (previsto) |
+| Banco de Dados | SQLite |
+
 
 ## Estrutura do Projeto
 
@@ -43,28 +43,6 @@ heliometrica/
     ├── deploy/       # Guias de deploy, infraestrutura, CI/CD
     └── testes/       # Estratégia, planos e evidências de testes
 ```
-
-## Integrantes do Projeto
-
-| Papel | Nome | Responsabilidade |
-|-------|------|------------------|
-| PO | Adrian | Priorização, validação de aceite, decisões de produto |
-| Tech Lead | Adrian | Arquitetura, code review, decisões técnicas |
-| Dev Backend | Erick, Daniel | API, modelos, integrações, testes backend |
-| Dev Frontend | Kaue, Adrian | UI, componentes, estado, integração API |
-| QA | Daniel, Kaue | Testes, automação, validação de aceite |
-| Modelagem/Deploy | Jean, Daniel | Diagramas UML, relatório, deploy, infraestrutura |
-
-> **Nota:** Conforme distribuição do Plano Técnico (seção 14).
-
-## Regras de Branches e Fluxo de Trabalho
-
-### Nomenclatura de Branches
-- `feat/<id>-<descricao>` — novas funcionalidades
-- `fix/<id>-<descricao>` — correções de bugs
-- `docs/<id>-<descricao>` — documentação
-- `refactor/<id>-<descricao>` — refatoração sem mudança de comportamento
-- `chore/<id>-<descricao>` — tarefas de manutenção, configs, dependencies
 
 ### Fluxo Obrigatório
 1. Atualize `main` local antes de iniciar: `git pull origin main`
