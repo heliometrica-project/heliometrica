@@ -7,6 +7,7 @@ export type {
   EstimateResult,
   HistoryPayload,
   HistoryRecord,
+  HistoryUpdatePayload,
   WeatherSnapshot,
 } from './estimate'
 export type {

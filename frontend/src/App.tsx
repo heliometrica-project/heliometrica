@@ -10,6 +10,7 @@ import { SolarModulesList } from './pages/SolarModulesList'
 import { SolarModulesForm } from './pages/SolarModulesForm'
 import { ComparePage } from './pages/ComparePage'
 import { EstimatePage } from './pages/EstimatePage'
+import { HistoryPage } from './pages/HistoryPage'
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
               <Route path="/modules/:id/edit" element={<SolarModulesForm />} />
               <Route path="/estimate" element={<EstimatePage />} />
               <Route path="/compare" element={<ComparePage />} />
+              <Route path="/history" element={<HistoryPage />} />
             </Route>
           </Route>
         </Routes>
