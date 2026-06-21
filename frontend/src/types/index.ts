@@ -1,6 +1,8 @@
 export type { Region } from './region'
 export type { SelectedLocation } from './location'
 export type { SolarModule, SolarModuleFormData } from './solarModule'
+export type { EnergyEstimate } from './estimate'
+export type { GenerationHistory } from './history'
 export type {
   CustomEstimatePayload,
   EstimatePayload,
