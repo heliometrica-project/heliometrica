@@ -10,7 +10,6 @@ visitante <|-- autenticado
 rectangle "HELIOMÉTRICA" {
  usecase "Cadastrar Usuário" as UC08
  usecase "Autenticar Usuário (Login)" as UC09
- usecase "Cadastrar Especificações de Módulo Solar" as UC10
  usecase "Gerenciar Histórico de Geração" as UC11
  usecase "Salvar Histórico" as UC11a
  usecase "Editar Histórico" as UC11b
@@ -20,7 +19,6 @@ visitante --> UC08
 visitante --> UC09
 
 
-autenticado --> UC10
 autenticado --> UC11
 
 UC11 <.. UC11a: <<extend>>
