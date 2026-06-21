@@ -1,0 +1,50 @@
+@startuml
+left to right direction
+
+skinparam componentStyle uml2
+skinparam nodesep 55
+skinparam ranksep 65
+
+title Diagrama de Componentes - Heliometrica
+
+component "Aplicacao Web" as Frontend
+
+package "Sistema Central\n(Backend)" {
+    component "Autenticacao" as Auth
+    component "Cadastros" as Cadastros
+    component "Estimativas" as Estimativas
+    component "Historico e\nRelatorios" as Relatorios
+}
+
+database "SQLite" as DB
+
+cloud "Servicos Externos" {
+    component "Open-Meteo" as Clima
+    component "OpenStreetMap /\nNominatim" as Mapas
+}
+
+() "API de\nautenticacao" as IAuth
+() "API de\ncadastros" as ICadastros
+() "API de\nestimativas" as IEstimativas
+() "API de\nhistorico" as IRelatorios
+
+Frontend ..> IAuth
+Frontend ..> ICadastros
+Frontend ..> IEstimativas
+Frontend ..> IRelatorios
+
+Auth - IAuth
+Cadastros - ICadastros
+Estimativas - IEstimativas
+Relatorios - IRelatorios
+
+Frontend ...> Mapas : \n\n\nmapa e enderecos
+
+Auth ..> DB
+Cadastros ..> DB
+Estimativas ..> DB
+Relatorios ..> DB
+
+Estimativas ..> Clima : clima por coordenada
+
+@enduml
