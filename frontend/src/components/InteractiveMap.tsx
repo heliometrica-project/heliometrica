@@ -25,8 +25,25 @@ const markerIcon = new L.Icon({
   shadowSize: [41, 41],
 })
 
+const COLORS = ['#d97706', '#059669', '#2563eb', '#dc2626', '#7c3aed', '#db2777', '#0891b2', '#65a30d']
+
+function createColoredIcon(color: string) {
+  return L.divIcon({
+    className: 'interactive-map__custom-marker',
+    html: `<div style="background:${color};width:28px;height:28px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;"></div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+    popupAnchor: [0, -14],
+  })
+}
+
 interface InteractiveMapProps {
   selectedLocation: SelectedLocation | null
+  onMapClick: (latlng: { lat: number; lng: number }) => void
+}
+
+interface MultiMarkerMapProps {
+  markers: { id: number; name: string; latitude: number; longitude: number }[]
   onMapClick: (latlng: { lat: number; lng: number }) => void
 }
 
@@ -48,6 +65,20 @@ function MapPanTo({ location }: { location: SelectedLocation | null }) {
       map.panTo([location.latitude, location.longitude], { duration: 0.5 })
     }
   }, [map, location])
+  return null
+}
+
+function MapFitBounds({ markers }: { markers: { latitude: number; longitude: number }[] }) {
+  const map = useMap()
+  const prevCount = useRef(0)
+  useEffect(() => {
+    if (markers.length === prevCount.current) return
+    prevCount.current = markers.length
+    if (markers.length > 0) {
+      const bounds = L.latLngBounds(markers.map((m) => [m.latitude, m.longitude] as [number, number]))
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 8 })
+    }
+  }, [map, markers])
   return null
 }
 
@@ -83,6 +114,40 @@ export function InteractiveMap({ selectedLocation, onMapClick }: InteractiveMapP
           </Marker>
         )}
         <MapPanTo location={selectedLocation} />
+      </MapContainer>
+    </div>
+  )
+}
+
+export function MultiMarkerMap({ markers, onMapClick }: MultiMarkerMapProps) {
+  return (
+    <div className="interactive-map interactive-map--multi">
+      <MapContainer
+        center={BRAZIL_CENTER}
+        zoom={INITIAL_ZOOM}
+        className="interactive-map__container"
+        scrollWheelZoom
+        zoomControl={false}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <MapClickHandler onClick={onMapClick} />
+        {markers.map((m, i) => (
+          <Marker
+            key={m.id}
+            position={[m.latitude, m.longitude]}
+            icon={createColoredIcon(COLORS[i % COLORS.length])}
+          >
+            <Popup>
+              <strong>{m.name}</strong>
+              <br />
+              {m.latitude.toFixed(4)}, {m.longitude.toFixed(4)}
+            </Popup>
+          </Marker>
+        ))}
+        <MapFitBounds markers={markers} />
       </MapContainer>
     </div>
   )

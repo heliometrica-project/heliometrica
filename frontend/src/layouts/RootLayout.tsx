@@ -11,6 +11,10 @@ export function RootLayout() {
 
   const isHome = location.pathname === '/'
   const isDashboard = location.pathname === '/dashboard'
+  const isModules = location.pathname.startsWith('/modules')
+  const isEstimate = location.pathname === '/estimate'
+  const isCompare = location.pathname === '/compare'
+  const isHistory = location.pathname === '/history'
   const isAuth = location.pathname === '/login' || location.pathname === '/register'
   const isWide = isDashboard || location.pathname === '/history'
 
@@ -82,6 +86,43 @@ export function RootLayout() {
 
           {/* Desktop end actions */}
           <div className="root-header__end">
+          <nav className="root-header__nav">
+            <Link
+              to="/"
+              className={`root-header__link ${location.pathname === '/' ? 'root-header__link--active' : ''}`}
+            >
+              Início
+            </Link>
+            <Link
+              to="/dashboard"
+              className={`root-header__link ${isDashboard ? 'root-header__link--active' : ''}`}
+            >
+              Dashboard
+            </Link>
+            <Link
+              to="/modules"
+              className={`root-header__link ${isModules ? 'root-header__link--active' : ''}`}
+            >
+              Módulos
+            </Link>
+            <Link
+              to="/estimate"
+              className={`root-header__link ${isEstimate ? 'root-header__link--active' : ''}`}
+            >
+              Estimar
+            </Link>
+            <Link
+              to="/compare"
+              className={`root-header__link ${isCompare ? 'root-header__link--active' : ''}`}
+            >
+              Comparar
+            </Link>
+            <Link
+              to="/history"
+              className={`root-header__link ${isHistory ? 'root-header__link--active' : ''}`}
+            >
+              Histórico
+            </Link>
             {user ? (
               <>
                 <span className="root-header__user">

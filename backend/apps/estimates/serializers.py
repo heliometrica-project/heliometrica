@@ -19,6 +19,35 @@ class RegionComparisonRequestSerializer(serializers.Serializer):
         return unique_ids
 
 
+class CustomLocationItemSerializer(serializers.Serializer):
+    id = serializers.IntegerField(min_value=1)
+    name = serializers.CharField(max_length=200)
+    state = serializers.CharField(max_length=100, default="", allow_blank=True)
+    latitude = serializers.DecimalField(max_digits=9, decimal_places=6)
+    longitude = serializers.DecimalField(max_digits=9, decimal_places=6)
+
+
+class CustomComparisonRequestSerializer(serializers.Serializer):
+    locations = serializers.ListField(
+        child=CustomLocationItemSerializer(),
+        min_length=2,
+    )
+
+    def validate_locations(self, value):
+        seen = set()
+        unique = []
+        for loc in value:
+            key = (round(float(loc["latitude"]), 4), round(float(loc["longitude"]), 4))
+            if key not in seen:
+                seen.add(key)
+                unique.append(loc)
+        if len(unique) < 2:
+            raise serializers.ValidationError(
+                "Informe pelo menos 2 localizacoes distintas para comparar."
+            )
+        return unique
+
+
 class WeatherSnapshotSerializer(serializers.ModelSerializer):
     region_name = serializers.CharField(source="region.name", read_only=True)
     region_state = serializers.CharField(source="region.state", read_only=True)
@@ -56,6 +85,14 @@ class WeatherSnapshotSerializer(serializers.ModelSerializer):
 class EstimateInputSerializer(serializers.Serializer):
     region_id = serializers.IntegerField()
     module_id = serializers.IntegerField()
+
+
+class CustomEstimateInputSerializer(serializers.Serializer):
+    module_id = serializers.IntegerField()
+    name = serializers.CharField(max_length=200, default="Ponto selecionado")
+    state = serializers.CharField(max_length=100, default="", allow_blank=True)
+    latitude = serializers.DecimalField(max_digits=9, decimal_places=6)
+    longitude = serializers.DecimalField(max_digits=9, decimal_places=6)
 
 
 class EstimateOutputSerializer(serializers.ModelSerializer):
