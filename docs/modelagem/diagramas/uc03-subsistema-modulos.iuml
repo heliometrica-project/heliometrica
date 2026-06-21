@@ -1,0 +1,26 @@
+@startuml
+
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Usuário Autenticado" as autenticado
+
+rectangle "HELIOMÉTRICA" {
+ usecase "Listar Módulos Solares" as UC12
+ usecase "Visualizar Módulo Solar" as UC13
+ usecase "Cadastrar Módulo Solar" as UC14
+ usecase "Editar Módulo Solar" as UC15
+ usecase "Excluir Módulo Solar" as UC16
+}
+
+autenticado --> UC12
+autenticado --> UC13
+autenticado --> UC14
+autenticado --> UC15
+autenticado --> UC16
+
+UC13 ..> UC12 : <<include>>
+UC15 ..> UC12 : <<include>>
+UC16 ..> UC12 : <<include>>
+
+@enduml
