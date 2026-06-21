@@ -1,0 +1,44 @@
+@startuml
+left to right direction
+
+skinparam componentStyle rectangle
+
+node "Máquina do Usuário\n<<Dispositivo>>" as NodeUsuario {
+}
+
+node "Servidor de Hospedagem\n<<Dispositivo>>" as NodeBackend {
+    
+    node "Servidor Web\n<<Ambiente de Execução>>" as Servidor {
+        component "Interface do Sistema\n(Frontend)" as Frontend
+    }
+
+    node "Processamento Principal\n<<Ambiente de Execução>>" as AppEnv {
+        component "API Heliométrica\n(Backend)" as API {
+            component "Gerenciamento de Contas\n(Acesso e Cadastro)" as Accounts
+            component "Gerenciamento de Dados\n(Painéis e Regiões)" as Core
+            component "Módulo de Cálculos\n(Estimativa de Energia)" as Estimates
+            component "Módulo de Relatórios\n(Histórico de Geração)" as Reporting
+        }
+    }
+
+    database "Banco de Dados Local\n(Arquivo SQLite)" as SQLite
+}
+
+cloud "Serviços Externos" as NodeExterno {
+    component "Serviço de Clima\n(Previsão do Tempo)" as OpenMeteo
+    component "Serviço de Localização\n(Mapas e Endereços)" as OSM
+}
+
+NodeUsuario ==> Frontend : Acessa a aplicação
+
+Frontend ==> API : Envia requisições e dados
+Frontend ==> OSM : Consulta mapas e locais
+
+API ==> SQLite : Armazena e recupera dados
+Estimates ==> OpenMeteo : Consulta a previsão do tempo
+
+Accounts ..> SQLite : Salva usuários e permissões
+Core ..> SQLite : Salva regiões e painéis
+Estimates ..> SQLite : Salva dados de clima e estimativas
+Reporting ..> SQLite : Consulta históricos e relatórios
+@enduml
