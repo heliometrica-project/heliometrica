@@ -49,4 +49,18 @@ export interface HistoryRecord {
   notes: string
   created_at: string
   updated_at: string
+  region_name: string | null
+  region_state: string | null
+  daily_kwh: string | null
+  monthly_kwh: string | null
+  yearly_kwh: string | null
+  efficiency_index: string | null
+  module_model: string | null
+  module_manufacturer: string | null
+  module_power_wp: string | null
+}
+
+export interface HistoryUpdatePayload {
+  title?: string
+  notes?: string
 }
