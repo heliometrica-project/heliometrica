@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { apiClient } from '../api'
+import { apiClient, createCustomEstimate, createEstimate } from '../api'
 import { reverseGeocode, parseResult, searchLocation } from '../api/nominatim'
 import type { NominatimResult } from '../api/nominatim'
 import type { Region, SelectedLocation, SolarModule, EnergyEstimate, GenerationHistory } from '../types'
@@ -65,19 +65,27 @@ function QuickEstimatePanel({
   }, [selectedLocation, regions])
 
   async function handleEstimate() {
-    if (!selectedRegionId || !selectedModuleId) return
+    if (!selectedLocation || !selectedModuleId) return
     setError(null)
     setResult(null)
     setSaved(false)
     setEstimating(true)
     try {
-      const data = await apiClient.post<EnergyEstimate>('/estimates/', {
-        region_id: selectedRegionId,
-        module_id: selectedModuleId,
-      })
+      const data = selectedRegionId
+        ? await createEstimate({
+            region_id: selectedRegionId,
+            module_id: selectedModuleId,
+          })
+        : await createCustomEstimate({
+            module_id: selectedModuleId,
+            name: selectedLocation.name,
+            state: selectedLocation.state,
+            latitude: selectedLocation.latitude,
+            longitude: selectedLocation.longitude,
+          })
       setResult(data)
       setHistoryTitle(
-        `${selectedLocation?.name ?? 'Estimativa'} – ${new Date().toLocaleDateString('pt-BR')}`,
+        `${selectedLocation.name ?? 'Estimativa'} – ${new Date().toLocaleDateString('pt-BR')}`,
       )
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao calcular estimativa.')
@@ -103,7 +111,7 @@ function QuickEstimatePanel({
     }
   }
 
-  const canEstimate = !!selectedRegionId && !!selectedModuleId && !estimating
+  const canEstimate = !!selectedLocation && !!selectedModuleId && !estimating
 
   return (
     <div className="quick-estimate">
@@ -306,19 +314,38 @@ export function Dashboard() {
   }, [])
 
   const handleMapClick = useCallback(async ({ lat, lng }: { lat: number; lng: number }) => {
-    const result = await reverseGeocode(lat, lng)
-    if (result) {
-      const { state } = parseResult(result)
-      const parts = result.display_name.split(',').slice(0, 3).join(',').trim()
-      setSelectedLocation({
-        name: parts,
-        state,
-        latitude: Number(result.lat),
-        longitude: Number(result.lon),
-        source: 'osm',
-      })
-      setSearchQuery(parts)
-      setSearchResults([])
+    const latFixed = Number(lat.toFixed(6))
+    const lngFixed = Number(lng.toFixed(6))
+    const fallbackName = `Ponto ${latFixed.toFixed(4)}, ${lngFixed.toFixed(4)}`
+
+    // Set location immediately with coordinate fallback
+    setSelectedLocation({
+      name: fallbackName,
+      state: '',
+      latitude: latFixed,
+      longitude: lngFixed,
+      source: 'osm',
+    })
+    setSearchQuery(fallbackName)
+    setSearchResults([])
+
+    // Try to refine name/state via reverse geocode
+    try {
+      const result = await reverseGeocode(latFixed, lngFixed)
+      if (result) {
+        const { state } = parseResult(result)
+        const parts = result.display_name.split(',').slice(0, 3).join(',').trim()
+        setSelectedLocation({
+          name: parts,
+          state,
+          latitude: latFixed,
+          longitude: lngFixed,
+          source: 'osm',
+        })
+        setSearchQuery(parts)
+      }
+    } catch {
+      // Keep fallback location
     }
   }, [])
 
