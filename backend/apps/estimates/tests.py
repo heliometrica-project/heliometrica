@@ -536,7 +536,7 @@ class EstimateAPITest(APITestCase):
         self.assertEqual(response.data["daily_kwh"], "9.240")
         self.assertEqual(response.data["monthly_kwh"], "277.200")
         self.assertEqual(response.data["annual_kwh"], "3372.600")
-        self.assertEqual(response.data["efficiency_index"], "20.9000")
+        self.assertEqual(response.data["efficiency_index"], "0.7996")
 
     def test_usuario_nao_autenticado_recebe_401(self):
         response = self.client.post(
@@ -592,7 +592,7 @@ class EstimateAPITest(APITestCase):
         self.assertEqual(estimate.daily_kwh, Decimal("9.240"))
         self.assertEqual(estimate.monthly_kwh, Decimal("277.200"))
         self.assertEqual(estimate.yearly_kwh, Decimal("3372.600"))
-        self.assertEqual(estimate.efficiency_index, Decimal("20.90"))
+        self.assertEqual(estimate.efficiency_index, Decimal("0.7996"))
 
     @patch("apps.estimates.services.request.urlopen")
     def test_usuario_autenticado_cria_estimativa_por_coordenada(self, urlopen_mock):

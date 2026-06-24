@@ -284,7 +284,7 @@ function HistoryRow({ record, isExpanded, onToggle, onEdit, onDelete, onExport, 
         </td>
         <td>{formatNumber(record.daily_kwh, 3)}</td>
         <td>{formatNumber(record.monthly_kwh, 3)}</td>
-        <td>{formatNumber(record.efficiency_index)}</td>
+        <td>{formatNumber(Number(record.efficiency_index) * 100)}</td>
         <td className="history-page__cell-date">{formatDate(record.updated_at)}</td>
         <td className="history-page__cell-actions" onClick={(e) => e.stopPropagation()}>
           <button
@@ -364,7 +364,7 @@ function HistoryRow({ record, isExpanded, onToggle, onEdit, onDelete, onExport, 
                 </div>
                 <div>
                   <span className="history-page__detail-label">PR (%)</span>
-                  <span className="history-page__detail-value">{formatNumber(record.efficiency_index)}</span>
+                  <span className="history-page__detail-value">{formatNumber(Number(record.efficiency_index) * 100)}</span>
                 </div>
                 <div>
                   <span className="history-page__detail-label">Observações</span>
