@@ -373,6 +373,11 @@ class EstimationService:
             rounding=ROUND_HALF_UP,
         )
 
+        theoretical_daily_kwh = installed_power_kw * irradiation
+        efficiency_index = (daily_kwh / theoretical_daily_kwh).quantize(
+            Decimal("0.0001"), rounding=ROUND_HALF_UP
+        )
+
         estimate = EnergyEstimate.objects.create(
             user=user,
             region=region,
@@ -381,7 +386,7 @@ class EstimationService:
             daily_kwh=daily_kwh,
             monthly_kwh=monthly_kwh,
             yearly_kwh=yearly_kwh,
-            efficiency_index=efficiency,
+            efficiency_index=efficiency_index,
         )
         return estimate
 

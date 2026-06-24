@@ -27,6 +27,8 @@ export function RootLayout() {
   // Nav links for authenticated users
   const appNavLinks = [
     { to: '/dashboard', label: 'Dashboard' },
+    { to: '/estimate', label: 'Estimar' },
+    { to: '/compare', label: 'Comparar' },
     { to: '/modules', label: 'Módulos' },
     { to: '/history', label: 'Histórico' },
   ]

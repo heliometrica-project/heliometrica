@@ -471,7 +471,7 @@ export function EstimatePage() {
                       </p>
                     </div>
                     <span className="estimate-result__badge">
-                      PR {formatNumber(result.efficiency_index)}%
+                      PR {(Number(result.efficiency_index) * 100).toFixed(1)}%
                     </span>
                   </div>
 
