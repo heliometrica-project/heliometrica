@@ -315,33 +315,6 @@ export function Home() {
         </div>
       </section>
 
-      {/* ══════════ TESTIMONIALS ══════════ */}
-      <section className="lp__testimonials" aria-label="Depoimentos">
-        <div className="lp__container">
-          <div className="lp__section-head">
-            <div className="lp__section-eyebrow">Depoimentos</div>
-            <h2 className="lp__section-title">O que dizem os profissionais</h2>
-          </div>
-
-          <div className="lp__testimonials-grid">
-            {testimonials.map((t) => (
-              <blockquote key={t.name} className="lp__testimonial">
-                <div className="lp__testimonial-stars" aria-label="5 estrelas">
-                  {'★★★★★'}
-                </div>
-                <p className="lp__testimonial-text">"{t.text}"</p>
-                <footer className="lp__testimonial-author">
-                  <div className="lp__testimonial-avatar">{t.avatar}</div>
-                  <div>
-                    <div className="lp__testimonial-name">{t.name}</div>
-                    <div className="lp__testimonial-role">{t.role}</div>
-                  </div>
-                </footer>
-              </blockquote>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ══════════ PRICING ══════════ */}
       <section className="lp__pricing" id="planos" aria-label="Planos e preços">
